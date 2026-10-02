@@ -26,7 +26,7 @@ import useGetCity from "./hooks/useGetCity";
 import useGetMyshop from "./hooks/useGetMyShop";
 
 export const serverUrl =
-    "http://localhost:5000";
+   "https://vingo-dwtv.onrender.com";
 
 function App() {
 
