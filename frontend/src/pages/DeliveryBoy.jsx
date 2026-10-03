@@ -9,17 +9,103 @@ import { useSelector } from "react-redux";
 
 import {
     FaLocationDot,
-    FaCheck,
     FaTruck,
-    FaPhone
+    FaPhone,
+    FaCheck
 } from "react-icons/fa6";
 
 import { serverUrl } from "../App";
 
-import useGetMyOrders from "../hooks/useGetMyOrder";
+import useGetMyOrders
+    from "../hooks/useGetMyOrder";
 
 import DeliveryTrackingMap
     from "../components/DeliveryTrackingMap";
+
+
+// =====================================================
+// DISTANCE CALCULATOR
+// =====================================================
+
+const calculateDistance = (
+    position1,
+    position2
+) => {
+
+    if (
+        !position1 ||
+        !position2
+    ) {
+        return null;
+    }
+
+
+    const earthRadius = 6371000;
+
+
+    const latitude1 =
+        position1[0] *
+        Math.PI /
+        180;
+
+
+    const latitude2 =
+        position2[0] *
+        Math.PI /
+        180;
+
+
+    const differenceLatitude =
+        (
+            position2[0] -
+            position1[0]
+        ) *
+        Math.PI /
+        180;
+
+
+    const differenceLongitude =
+        (
+            position2[1] -
+            position1[1]
+        ) *
+        Math.PI /
+        180;
+
+
+    const a =
+        Math.sin(
+            differenceLatitude / 2
+        ) *
+        Math.sin(
+            differenceLatitude / 2
+        ) +
+
+        Math.cos(latitude1) *
+        Math.cos(latitude2) *
+
+        Math.sin(
+            differenceLongitude / 2
+        ) *
+        Math.sin(
+            differenceLongitude / 2
+        );
+
+
+    const c =
+        2 *
+        Math.atan2(
+            Math.sqrt(a),
+            Math.sqrt(1 - a)
+        );
+
+
+    return (
+        earthRadius *
+        c
+    );
+
+};
 
 
 const DeliveryBoy = () => {
@@ -38,11 +124,19 @@ const DeliveryBoy = () => {
     } = useGetMyOrders();
 
 
+    // =====================================================
+    // DELIVERY REQUESTS
+    // =====================================================
+
     const [
         deliveryRequests,
         setDeliveryRequests
     ] = useState([]);
 
+
+    // =====================================================
+    // DELIVERY BOY LOCATION
+    // =====================================================
 
     const [
         deliveryBoyPosition,
@@ -50,17 +144,39 @@ const DeliveryBoy = () => {
     ] = useState(null);
 
 
+    // =====================================================
+    // OTP INPUT
+    // =====================================================
+
     const [
         otpInputs,
         setOtpInputs
     ] = useState({});
 
 
+    // =====================================================
+    // OTP GENERATED STATE
+    // =====================================================
+
+    const [
+        otpGenerated,
+        setOtpGenerated
+    ] = useState({});
+
+
+    // =====================================================
+    // VERIFYING OTP
+    // =====================================================
+
     const [
         verifyingOtp,
         setVerifyingOtp
     ] = useState({});
 
+
+    // =====================================================
+    // MARKING DELIVERY
+    // =====================================================
 
     const [
         markingDelivery,
@@ -84,15 +200,10 @@ const DeliveryBoy = () => {
                             "token"
                         );
 
+
                     if (!token) {
                         return;
                     }
-
-
-                    console.log(
-                        "DELIVERY BOY TOKEN:",
-                        !!token
-                    );
 
 
                     const result =
@@ -165,6 +276,7 @@ const DeliveryBoy = () => {
             return;
         }
 
+
         if (
             userData.role !==
             "deliveryBoy"
@@ -194,8 +306,15 @@ const DeliveryBoy = () => {
                     const latitude =
                         position.coords.latitude;
 
+
                     const longitude =
                         position.coords.longitude;
+
+
+                    const newPosition = [
+                        latitude,
+                        longitude
+                    ];
 
 
                     console.log(
@@ -207,10 +326,9 @@ const DeliveryBoy = () => {
                     );
 
 
-                    setDeliveryBoyPosition([
-                        latitude,
-                        longitude
-                    ]);
+                    setDeliveryBoyPosition(
+                        newPosition
+                    );
 
                 },
 
@@ -258,6 +376,17 @@ const DeliveryBoy = () => {
                     );
 
 
+                if (!token) {
+
+                    alert(
+                        "Delivery boy token not found"
+                    );
+
+                    return;
+
+                }
+
+
                 const result =
                     await axios.put(
                         `${serverUrl}/api/order/accept-delivery/${assignmentId}`,
@@ -301,6 +430,7 @@ const DeliveryBoy = () => {
                     error.message
                 );
 
+
                 alert(
                     error.response?.data?.message ||
                     "Unable to accept delivery"
@@ -341,6 +471,7 @@ const DeliveryBoy = () => {
                     return (
                         assignment.status ===
                         "assigned" &&
+
                         shopOrder.status ===
                         "out for delivery"
                     );
@@ -388,8 +519,25 @@ const DeliveryBoy = () => {
                     Number.isFinite(
                         customerLatitude
                     ) &&
+
                     Number.isFinite(
                         customerLongitude
+                    );
+
+
+                const customerPosition =
+                    validCustomerPosition
+                        ? [
+                            customerLatitude,
+                            customerLongitude
+                        ]
+                        : null;
+
+
+                const distance =
+                    calculateDistance(
+                        customerPosition,
+                        deliveryBoyPosition
                     );
 
 
@@ -399,13 +547,9 @@ const DeliveryBoy = () => {
 
                     shopOrder,
 
-                    customerPosition:
-                        validCustomerPosition
-                            ? [
-                                customerLatitude,
-                                customerLongitude
-                            ]
-                            : null
+                    customerPosition,
+
+                    distance
 
                 };
 
@@ -414,27 +558,56 @@ const DeliveryBoy = () => {
 
 
     // =====================================================
-    // DEBUG ACTIVE DELIVERIES
+    // DEBUG
     // =====================================================
 
     useEffect(() => {
 
         console.log(
-            "========== ACTIVE DELIVERIES =========="
+            "========== DELIVERY UI =========="
         );
+
 
         console.log(
             "ACTIVE DELIVERIES:",
             activeDeliveries
         );
 
+
         console.log(
             "DELIVERY BOY POSITION:",
             deliveryBoyPosition
         );
 
+
+        activeDeliveries.forEach(
+            (
+                delivery,
+                index
+            ) => {
+
+                console.log(
+                    `DELIVERY ${index + 1}:`,
+                    {
+                        orderId:
+                            delivery.order?._id,
+
+                        customerPosition:
+                            delivery.customerPosition,
+
+                        deliveryBoyPosition,
+
+                        distance:
+                            delivery.distance
+                    }
+                );
+
+            }
+        );
+
+
         console.log(
-            "========================================"
+            "================================"
         );
 
     }, [
@@ -449,9 +622,7 @@ const DeliveryBoy = () => {
 
     const markDelivery =
         async (
-            assignmentId,
-            orderId,
-            shopOrderId
+            assignmentId
         ) => {
 
             try {
@@ -469,6 +640,17 @@ const DeliveryBoy = () => {
                     localStorage.getItem(
                         "token"
                     );
+
+
+                if (!token) {
+
+                    alert(
+                        "Delivery boy token not found"
+                    );
+
+                    return;
+
+                }
 
 
                 const result =
@@ -497,6 +679,16 @@ const DeliveryBoy = () => {
                     result.data?.otpGenerated
                 ) {
 
+                    setOtpGenerated(
+                        (prev) => ({
+                            ...prev,
+
+                            [assignmentId]:
+                                true
+                        })
+                    );
+
+
                     setOtpInputs(
                         (prev) => ({
                             ...prev,
@@ -520,6 +712,7 @@ const DeliveryBoy = () => {
                     error.message
                 );
 
+
                 alert(
                     error.response?.data?.message ||
                     "Unable to mark delivery"
@@ -530,6 +723,7 @@ const DeliveryBoy = () => {
                 setMarkingDelivery(
                     (prev) => ({
                         ...prev,
+
                         [assignmentId]:
                             false
                     })
@@ -571,6 +765,7 @@ const DeliveryBoy = () => {
                 setVerifyingOtp(
                     (prev) => ({
                         ...prev,
+
                         [assignmentId]:
                             true
                     })
@@ -581,6 +776,17 @@ const DeliveryBoy = () => {
                     localStorage.getItem(
                         "token"
                     );
+
+
+                if (!token) {
+
+                    alert(
+                        "Delivery boy token not found"
+                    );
+
+                    return;
+
+                }
 
 
                 const result =
@@ -620,9 +826,30 @@ const DeliveryBoy = () => {
                             ...prev
                         };
 
+
                         delete updated[
                             assignmentId
                         ];
+
+
+                        return updated;
+
+                    }
+                );
+
+
+                setOtpGenerated(
+                    (prev) => {
+
+                        const updated = {
+                            ...prev
+                        };
+
+
+                        delete updated[
+                            assignmentId
+                        ];
+
 
                         return updated;
 
@@ -641,6 +868,7 @@ const DeliveryBoy = () => {
                     error.message
                 );
 
+
                 alert(
                     error.response?.data?.message ||
                     "Invalid OTP"
@@ -651,6 +879,7 @@ const DeliveryBoy = () => {
                 setVerifyingOtp(
                     (prev) => ({
                         ...prev,
+
                         [assignmentId]:
                             false
                     })
@@ -668,6 +897,7 @@ const DeliveryBoy = () => {
     if (loading) {
 
         return (
+
             <div
                 className="
                     min-h-screen
@@ -677,11 +907,16 @@ const DeliveryBoy = () => {
                 "
             >
 
-                <p className="text-gray-500">
+                <p
+                    className="
+                        text-gray-500
+                    "
+                >
                     Loading deliveries...
                 </p>
 
             </div>
+
         );
 
     }
@@ -709,6 +944,10 @@ const DeliveryBoy = () => {
                 "
             >
 
+                {/* =================================================
+                    PAGE TITLE
+                ================================================= */}
+
                 <h1
                     className="
                         text-2xl
@@ -722,13 +961,17 @@ const DeliveryBoy = () => {
 
 
                 {/* =================================================
-                    DELIVERY REQUESTS
+                    NEW DELIVERY REQUESTS
                 ================================================= */}
 
                 {deliveryRequests.length >
                     0 && (
 
-                    <div className="mb-8">
+                    <div
+                        className="
+                            mb-8
+                        "
+                    >
 
                         <h2
                             className="
@@ -792,11 +1035,14 @@ const DeliveryBoy = () => {
                                                             text-gray-800
                                                         "
                                                     >
-                                                        {shopOrder
-                                                            ?.shop
-                                                            ?.name ||
-                                                            "Restaurant"}
+                                                        {
+                                                            shopOrder
+                                                                ?.shop
+                                                                ?.name ||
+                                                            "Restaurant"
+                                                        }
                                                     </h3>
+
 
                                                     <p
                                                         className="
@@ -804,10 +1050,12 @@ const DeliveryBoy = () => {
                                                             text-gray-500
                                                         "
                                                     >
-                                                        {order
-                                                            ?.deliveryAddress
-                                                            ?.address ||
-                                                            "Customer location"}
+                                                        {
+                                                            order
+                                                                ?.deliveryAddress
+                                                                ?.address ||
+                                                            "Customer location"
+                                                        }
                                                     </p>
 
                                                 </div>
@@ -846,9 +1094,7 @@ const DeliveryBoy = () => {
                                                     hover:opacity-90
                                                 "
                                             >
-
                                                 Accept Delivery
-
                                             </button>
 
                                         </div>
@@ -904,6 +1150,7 @@ const DeliveryBoy = () => {
                                 "
                             />
 
+
                             <p
                                 className="
                                     text-gray-500
@@ -926,7 +1173,8 @@ const DeliveryBoy = () => {
                                 ({
                                     order,
                                     shopOrder,
-                                    customerPosition
+                                    customerPosition,
+                                    distance
                                 }) => {
 
                                     const assignment =
@@ -936,6 +1184,17 @@ const DeliveryBoy = () => {
 
                                     const assignmentId =
                                         assignment?._id;
+
+
+                                    const within200Meters =
+                                        distance !== null &&
+                                        distance <= 200;
+
+
+                                    const hasOtp =
+                                        otpGenerated[
+                                            assignmentId
+                                        ] === true;
 
 
                                     return (
@@ -967,6 +1226,7 @@ const DeliveryBoy = () => {
                                                     flex
                                                     items-center
                                                     justify-between
+                                                    gap-4
                                                 "
                                             >
 
@@ -980,6 +1240,7 @@ const DeliveryBoy = () => {
                                                     >
                                                         Delivery
                                                     </h3>
+
 
                                                     <p
                                                         className="
@@ -1006,6 +1267,7 @@ const DeliveryBoy = () => {
                                                         text-orange-600
                                                         text-sm
                                                         font-semibold
+                                                        whitespace-nowrap
                                                     "
                                                 >
                                                     Out for Delivery
@@ -1040,6 +1302,7 @@ const DeliveryBoy = () => {
                                                         "
                                                     />
 
+
                                                     <div>
 
                                                         <p
@@ -1051,6 +1314,7 @@ const DeliveryBoy = () => {
                                                             Customer
                                                         </p>
 
+
                                                         <p
                                                             className="
                                                                 text-sm
@@ -1060,7 +1324,8 @@ const DeliveryBoy = () => {
                                                             {
                                                                 order
                                                                     ?.deliveryAddress
-                                                                    ?.address
+                                                                    ?.address ||
+                                                                "Customer location"
                                                             }
                                                         </p>
 
@@ -1088,6 +1353,7 @@ const DeliveryBoy = () => {
                                                             "
                                                         />
 
+
                                                         <span>
                                                             {
                                                                 order
@@ -1104,7 +1370,7 @@ const DeliveryBoy = () => {
 
 
                                             {/* ==========================
-                                                TRACKING MAP
+                                                LIVE MAP
                                             ========================== */}
 
                                             {customerPosition &&
@@ -1126,16 +1392,32 @@ const DeliveryBoy = () => {
                                                     className="
                                                         mx-5
                                                         mb-5
-                                                        p-4
+                                                        p-5
                                                         rounded-lg
                                                         bg-gray-50
                                                         text-center
-                                                        text-sm
-                                                        text-gray-500
                                                     "
                                                 >
 
-                                                    Waiting for location...
+                                                    <FaLocationDot
+                                                        className="
+                                                            mx-auto
+                                                            text-gray-400
+                                                            text-2xl
+                                                            mb-2
+                                                        "
+                                                    />
+
+
+                                                    <p
+                                                        className="
+                                                            text-sm
+                                                            text-gray-500
+                                                        "
+                                                    >
+                                                        Waiting for your
+                                                        live location...
+                                                    </p>
 
                                                 </div>
 
@@ -1143,92 +1425,247 @@ const DeliveryBoy = () => {
 
 
                                             {/* ==========================
-                                                MARK DELIVERY
+                                                DISTANCE STATUS
+                                            ========================== */}
+
+                                            {distance !== null && (
+
+                                                <div
+                                                    className={`
+                                                        mx-5
+                                                        mt-4
+                                                        p-4
+                                                        rounded-xl
+                                                        text-center
+                                                        border
+
+                                                        ${
+                                                            within200Meters
+                                                                ? `
+                                                                    bg-green-50
+                                                                    border-green-200
+                                                                `
+                                                                : `
+                                                                    bg-orange-50
+                                                                    border-orange-200
+                                                                `
+                                                        }
+                                                    `}
+                                                >
+
+                                                    <p
+                                                        className="
+                                                            text-sm
+                                                            text-gray-500
+                                                        "
+                                                    >
+                                                        Distance from customer
+                                                    </p>
+
+
+                                                    <p
+                                                        className={`
+                                                            text-2xl
+                                                            font-bold
+                                                            mt-1
+
+                                                            ${
+                                                                within200Meters
+                                                                    ? "text-green-600"
+                                                                    : "text-orange-600"
+                                                            }
+                                                        `}
+                                                    >
+
+                                                        {distance >=
+                                                            1000
+
+                                                            ? `${(
+                                                                distance /
+                                                                1000
+                                                            ).toFixed(
+                                                                2
+                                                            )} km`
+
+                                                            : `${Math.round(
+                                                                distance
+                                                            )} m`
+                                                        }
+
+                                                    </p>
+
+
+                                                    {within200Meters ? (
+
+                                                        <p
+                                                            className="
+                                                                mt-2
+                                                                text-green-600
+                                                                font-semibold
+                                                                flex
+                                                                items-center
+                                                                justify-center
+                                                                gap-2
+                                                            "
+                                                        >
+
+                                                            <FaCheck />
+
+                                                            You are within
+                                                            200 metres
+
+                                                        </p>
+
+                                                    ) : (
+
+                                                        <p
+                                                            className="
+                                                                mt-2
+                                                                text-orange-600
+                                                                font-medium
+                                                            "
+                                                        >
+
+                                                            Move within
+                                                            200 metres to
+                                                            mark delivery
+
+                                                        </p>
+
+                                                    )}
+
+                                                </div>
+
+                                            )}
+
+
+                                            {/* ==========================
+                                                MARK DELIVERY / OTP
                                             ========================== */}
 
                                             <div
                                                 className="
                                                     px-5
-                                                    pb-5
+                                                    py-5
                                                 "
                                             >
 
-                                                {!otpInputs[
-                                                    assignmentId
-                                                ] && (
+                                                {/* ======================
+                                                    MARK DELIVERY BUTTON
+                                                ====================== */}
+
+                                                {!hasOtp && (
 
                                                     <button
                                                         onClick={() =>
                                                             markDelivery(
-                                                                assignmentId,
-                                                                order?._id,
-                                                                shopOrder?._id
+                                                                assignmentId
                                                             )
                                                         }
 
                                                         disabled={
+                                                            !within200Meters ||
                                                             markingDelivery[
                                                                 assignmentId
                                                             ]
                                                         }
 
-                                                        className="
+                                                        className={`
                                                             w-full
-                                                            bg-[#ff4d2d]
-                                                            text-white
                                                             py-3
                                                             rounded-lg
                                                             font-semibold
-                                                            disabled:opacity-50
-                                                        "
+                                                            transition
+
+                                                            ${
+                                                                within200Meters
+                                                                    ? `
+                                                                        bg-[#ff4d2d]
+                                                                        text-white
+                                                                        hover:opacity-90
+                                                                    `
+                                                                    : `
+                                                                        bg-gray-300
+                                                                        text-gray-500
+                                                                        cursor-not-allowed
+                                                                    `
+                                                            }
+                                                        `}
                                                     >
 
                                                         {markingDelivery[
                                                             assignmentId
                                                         ]
+
                                                             ? "Checking location..."
-                                                            : "Mark as Delivered"}
+
+                                                            : within200Meters
+
+                                                                ? "Mark as Delivered"
+
+                                                                : "Move within 200 metres"}
 
                                                     </button>
 
                                                 )}
 
 
-                                                {otpInputs[
-                                                    assignmentId
-                                                ] !==
-                                                    undefined && (
+                                                {/* ======================
+                                                    OTP SECTION
+                                                ====================== */}
+
+                                                {hasOtp && (
 
                                                     <div
                                                         className="
-                                                            mt-4
-                                                            p-4
+                                                            p-5
                                                             rounded-xl
                                                             border
-                                                            bg-gray-50
+                                                            border-green-200
+                                                            bg-green-50
                                                         "
                                                     >
 
-                                                        <p
+                                                        <div
                                                             className="
-                                                                font-semibold
-                                                                text-gray-800
+                                                                flex
+                                                                items-center
+                                                                gap-2
                                                                 mb-2
                                                             "
                                                         >
-                                                            Enter Customer OTP
-                                                        </p>
+
+                                                            <FaCheck
+                                                                className="
+                                                                    text-green-600
+                                                                "
+                                                            />
+
+
+                                                            <p
+                                                                className="
+                                                                    font-semibold
+                                                                    text-green-700
+                                                                "
+                                                            >
+                                                                You are at the
+                                                                customer location
+                                                            </p>
+
+                                                        </div>
 
 
                                                         <p
                                                             className="
                                                                 text-sm
-                                                                text-gray-500
-                                                                mb-3
+                                                                text-gray-600
+                                                                mb-4
                                                             "
                                                         >
-                                                            Ask the customer for the
-                                                            6-digit delivery OTP.
+                                                            Delivery OTP has
+                                                            been generated.
+                                                            Ask the customer
+                                                            for the 6-digit OTP.
                                                         </p>
 
 
@@ -1236,6 +1673,8 @@ const DeliveryBoy = () => {
                                                             type="text"
 
                                                             inputMode="numeric"
+
+                                                            autoComplete="one-time-code"
 
                                                             maxLength={6}
 
@@ -1246,10 +1685,14 @@ const DeliveryBoy = () => {
                                                                 ""
                                                             }
 
-                                                            onChange={(event) => {
+                                                            onChange={(
+                                                                event
+                                                            ) => {
 
                                                                 const value =
-                                                                    event.target.value
+                                                                    event
+                                                                        .target
+                                                                        .value
                                                                         .replace(
                                                                             /\D/g,
                                                                             ""
@@ -1280,8 +1723,13 @@ const DeliveryBoy = () => {
                                                                 rounded-lg
                                                                 px-4
                                                                 py-3
+                                                                bg-white
                                                                 outline-none
                                                                 focus:border-[#ff4d2d]
+                                                                text-center
+                                                                tracking-[0.4em]
+                                                                text-lg
+                                                                font-semibold
                                                             "
                                                         />
 
@@ -1296,7 +1744,14 @@ const DeliveryBoy = () => {
                                                             disabled={
                                                                 verifyingOtp[
                                                                     assignmentId
-                                                                ]
+                                                                ] ||
+                                                                (
+                                                                    otpInputs[
+                                                                        assignmentId
+                                                                    ] ||
+                                                                    ""
+                                                                ).length !==
+                                                                6
                                                             }
 
                                                             className="
@@ -1308,13 +1763,17 @@ const DeliveryBoy = () => {
                                                                 rounded-lg
                                                                 font-semibold
                                                                 disabled:opacity-50
+                                                                disabled:cursor-not-allowed
+                                                                hover:bg-green-700
                                                             "
                                                         >
 
                                                             {verifyingOtp[
                                                                 assignmentId
                                                             ]
+
                                                                 ? "Verifying..."
+
                                                                 : "Verify OTP & Complete Delivery"}
 
                                                         </button>
