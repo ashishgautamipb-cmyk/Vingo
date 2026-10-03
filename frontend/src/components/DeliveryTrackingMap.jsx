@@ -16,8 +16,11 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 
-delete L.Icon.Default.prototype._getIconUrl;
+// ======================================================
+// FIX LEAFLET DEFAULT ICON
+// ======================================================
 
+delete L.Icon.Default.prototype._getIconUrl;
 
 L.Icon.Default.mergeOptions({
 
@@ -33,13 +36,16 @@ L.Icon.Default.mergeOptions({
 });
 
 
+// ======================================================
+// MAP CONTROLLER
+// ======================================================
+
 const MapController = ({
     customerPosition,
     deliveryBoyPosition
 }) => {
 
-    const map =
-        useMap();
+    const map = useMap();
 
 
     useEffect(() => {
@@ -60,13 +66,15 @@ const MapController = ({
                 bounds,
                 {
                     padding: [
-                        40,
-                        40
+                        50,
+                        50
                     ]
                 }
             );
 
-        } else if (
+        }
+
+        else if (
             customerPosition
         ) {
 
@@ -75,7 +83,9 @@ const MapController = ({
                 15
             );
 
-        } else if (
+        }
+
+        else if (
             deliveryBoyPosition
         ) {
 
@@ -98,6 +108,94 @@ const MapController = ({
 };
 
 
+// ======================================================
+// CALCULATE DISTANCE
+// ======================================================
+
+const calculateDistance = (
+    position1,
+    position2
+) => {
+
+    if (
+        !position1 ||
+        !position2
+    ) {
+        return null;
+    }
+
+
+    const earthRadius =
+        6371000;
+
+
+    const latitude1 =
+        position1[0] *
+        Math.PI /
+        180;
+
+    const latitude2 =
+        position2[0] *
+        Math.PI /
+        180;
+
+
+    const differenceLatitude =
+        (
+            position2[0] -
+            position1[0]
+        ) *
+        Math.PI /
+        180;
+
+
+    const differenceLongitude =
+        (
+            position2[1] -
+            position1[1]
+        ) *
+        Math.PI /
+        180;
+
+
+    const a =
+        Math.sin(
+            differenceLatitude / 2
+        ) *
+        Math.sin(
+            differenceLatitude / 2
+        ) +
+
+        Math.cos(latitude1) *
+        Math.cos(latitude2) *
+
+        Math.sin(
+            differenceLongitude / 2
+        ) *
+        Math.sin(
+            differenceLongitude / 2
+        );
+
+
+    const c =
+        2 *
+        Math.atan2(
+            Math.sqrt(a),
+            Math.sqrt(1 - a)
+        );
+
+
+    return (
+        earthRadius *
+        c
+    );
+};
+
+
+// ======================================================
+// MAIN COMPONENT
+// ======================================================
+
 const DeliveryTrackingMap = ({
     customerPosition,
     deliveryBoyPosition
@@ -112,6 +210,13 @@ const DeliveryTrackingMap = ({
         ];
 
 
+    const distance =
+        calculateDistance(
+            customerPosition,
+            deliveryBoyPosition
+        );
+
+
     return (
 
         <div
@@ -121,23 +226,74 @@ const DeliveryTrackingMap = ({
                 overflow-hidden
                 border
                 border-gray-200
+                bg-white
             "
         >
 
+            {/* HEADER */}
+
             <div
                 className="
-                    px-3
-                    py-2
+                    px-4
+                    py-3
                     bg-gray-50
                     border-b
-                    text-xs
-                    font-semibold
-                    text-gray-700
                 "
             >
-                Live Delivery Tracking
+
+                <div
+                    className="
+                        text-sm
+                        font-semibold
+                        text-gray-800
+                    "
+                >
+                    Live Delivery Tracking
+                </div>
+
+
+                {distance !== null && (
+
+                    <div
+                        className="
+                            text-sm
+                            text-gray-500
+                            mt-1
+                        "
+                    >
+
+                        Distance between you and
+                        delivery boy:{" "}
+
+                        <span
+                            className="
+                                font-semibold
+                                text-orange-500
+                            "
+                        >
+
+                            {distance >= 1000
+                                ? `${(
+                                    distance /
+                                    1000
+                                ).toFixed(
+                                    2
+                                )} KM`
+                                : `${Math.round(
+                                    distance
+                                )} m`
+                            }
+
+                        </span>
+
+                    </div>
+
+                )}
+
             </div>
 
+
+            {/* MAP */}
 
             <MapContainer
                 center={
@@ -147,7 +303,7 @@ const DeliveryTrackingMap = ({
                 scrollWheelZoom={true}
                 className="
                     w-full
-                    h-[260px]
+                    h-[300px]
                 "
             >
 
@@ -155,9 +311,7 @@ const DeliveryTrackingMap = ({
                     attribution="
                         &copy; OpenStreetMap contributors
                     "
-                    url="
-                        https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
-                    "
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
 
@@ -171,6 +325,8 @@ const DeliveryTrackingMap = ({
                 />
 
 
+                {/* CUSTOMER */}
+
                 {customerPosition && (
 
                     <Marker
@@ -180,14 +336,23 @@ const DeliveryTrackingMap = ({
                     >
 
                         <Popup>
-                            Customer
-                            Delivery Location
+
+                            <strong>
+                                Your Location
+                            </strong>
+
+                            <br />
+
+                            Customer delivery location
+
                         </Popup>
 
                     </Marker>
 
                 )}
 
+
+                {/* DELIVERY BOY */}
 
                 {deliveryBoyPosition && (
 
@@ -198,13 +363,23 @@ const DeliveryTrackingMap = ({
                     >
 
                         <Popup>
-                            Delivery Boy
+
+                            <strong>
+                                Delivery Boy
+                            </strong>
+
+                            <br />
+
+                            Current location
+
                         </Popup>
 
                     </Marker>
 
                 )}
 
+
+                {/* LINE */}
 
                 {customerPosition &&
                     deliveryBoyPosition && (
@@ -214,11 +389,69 @@ const DeliveryTrackingMap = ({
                             deliveryBoyPosition,
                             customerPosition
                         ]}
+                        pathOptions={{
+                            weight: 5
+                        }}
                     />
 
                 )}
 
             </MapContainer>
+
+
+            {/* DISTANCE STATUS */}
+
+            {distance !== null && (
+
+                <div
+                    className="
+                        px-4
+                        py-3
+                        border-t
+                        text-center
+                    "
+                >
+
+                    {distance <= 200 ? (
+
+                        <p
+                            className="
+                                text-green-600
+                                font-semibold
+                            "
+                        >
+                            Delivery boy is within
+                            200 meters
+                        </p>
+
+                    ) : (
+
+                        <p
+                            className="
+                                text-gray-600
+                            "
+                        >
+                            Delivery boy is{" "}
+
+                            <span
+                                className="
+                                    font-semibold
+                                "
+                            >
+                                {Math.round(
+                                    distance
+                                )} meters
+                            </span>
+
+                            {" "}away
+
+                        </p>
+
+                    )}
+
+                </div>
+
+            )}
 
         </div>
 
