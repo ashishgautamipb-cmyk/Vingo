@@ -1,4 +1,7 @@
-import React, { useEffect } from "react";
+import React, {
+    useEffect
+} from "react";
+
 import {
     MapContainer,
     TileLayer,
@@ -12,7 +15,11 @@ import L from "leaflet";
 
 import "leaflet/dist/leaflet.css";
 
-// Fix Leaflet marker icons
+
+// ======================================================
+// LEAFLET MARKER ICON FIX
+// ======================================================
+
 delete L.Icon.Default.prototype._getIconUrl;
 
 L.Icon.Default.mergeOptions({
@@ -23,7 +30,7 @@ L.Icon.Default.mergeOptions({
         "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
 
     shadowUrl:
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png"
 });
 
 
@@ -38,41 +45,132 @@ const MapController = ({
 
     const map = useMap();
 
+
     useEffect(() => {
 
+        if (
+            !customerPosition ||
+            !deliveryBoyPosition
+        ) {
+            return;
+        }
+
+
         console.log(
-            "MAP CONTROLLER:",
-            {
-                customerPosition,
-                deliveryBoyPosition
-            }
+            "========== MAP CONTROLLER =========="
         );
 
-        setTimeout(() => {
+        console.log(
+            "CUSTOMER:",
+            customerPosition
+        );
 
+        console.log(
+            "DELIVERY BOY:",
+            deliveryBoyPosition
+        );
+
+
+        const updateMap = () => {
+
+            // Important when map is inside
+            // a hidden/dynamic container
             map.invalidateSize();
 
-            if (
-                customerPosition &&
-                deliveryBoyPosition
-            ) {
 
-                const bounds =
-                    L.latLngBounds([
-                        customerPosition,
-                        deliveryBoyPosition
-                    ]);
+            const bounds =
+                L.latLngBounds([
+                    customerPosition,
+                    deliveryBoyPosition
+                ]);
+
+
+            if (
+                bounds.isValid()
+            ) {
 
                 map.fitBounds(
                     bounds,
                     {
-                        padding: [50, 50],
-                        maxZoom: 17
+                        padding: [
+                            60,
+                            60
+                        ],
+                        maxZoom: 17,
+                        animate: false
                     }
                 );
+
             }
 
-        }, 500);
+        };
+
+
+        // Initial update
+        updateMap();
+
+
+        // Give Leaflet another chance after
+        // browser layout calculation
+        const timer1 =
+            setTimeout(
+                updateMap,
+                200
+            );
+
+
+        const timer2 =
+            setTimeout(
+                updateMap,
+                700
+            );
+
+
+        // Watch container size changes
+        let resizeObserver = null;
+
+
+        if (
+            typeof ResizeObserver !==
+            "undefined"
+        ) {
+
+            const container =
+                map.getContainer();
+
+
+            resizeObserver =
+                new ResizeObserver(
+                    () => {
+
+                        map.invalidateSize();
+
+                    }
+                );
+
+
+            resizeObserver.observe(
+                container
+            );
+
+        }
+
+
+        return () => {
+
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+
+
+            if (
+                resizeObserver
+            ) {
+
+                resizeObserver.disconnect();
+
+            }
+
+        };
 
     }, [
         map,
@@ -80,7 +178,9 @@ const MapController = ({
         deliveryBoyPosition
     ]);
 
+
     return null;
+
 };
 
 
@@ -93,66 +193,172 @@ const DeliveryTrackingMap = ({
     deliveryBoyPosition
 }) => {
 
+
     console.log(
         "========== DELIVERY MAP =========="
     );
+
 
     console.log(
         "CUSTOMER POSITION:",
         customerPosition
     );
 
+
     console.log(
         "DELIVERY BOY POSITION:",
         deliveryBoyPosition
     );
+
 
     console.log(
         "=================================="
     );
 
 
-    // --------------------------------------------------
-    // SAFETY CHECK
-    // --------------------------------------------------
+    // ==================================================
+    // VALIDATE POSITIONS
+    // ==================================================
+
+    const isValidPosition = (
+        position
+    ) => {
+
+        if (
+            !Array.isArray(position)
+        ) {
+            return false;
+        }
+
+
+        if (
+            position.length !== 2
+        ) {
+            return false;
+        }
+
+
+        const latitude =
+            Number(position[0]);
+
+        const longitude =
+            Number(position[1]);
+
+
+        if (
+            !Number.isFinite(latitude) ||
+            !Number.isFinite(longitude)
+        ) {
+            return false;
+        }
+
+
+        if (
+            latitude < -90 ||
+            latitude > 90
+        ) {
+            return false;
+        }
+
+
+        if (
+            longitude < -180 ||
+            longitude > 180
+        ) {
+            return false;
+        }
+
+
+        return true;
+
+    };
+
 
     if (
-        !customerPosition ||
-        !deliveryBoyPosition
+        !isValidPosition(
+            customerPosition
+        ) ||
+        !isValidPosition(
+            deliveryBoyPosition
+        )
     ) {
 
+        console.log(
+            "MAP DATA INVALID"
+        );
+
+
         return (
+
             <div
                 style={{
                     width: "100%",
-                    height: "350px",
-                    background: "#eeeeee",
-                    border: "3px solid red",
+                    height: "400px",
+                    minHeight: "400px",
+                    background: "#f3f4f6",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "12px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "18px",
-                    fontWeight: "bold"
+                    textAlign: "center",
+                    padding: "20px"
                 }}
             >
-                MAP DATA NOT AVAILABLE
+
+                <div>
+
+                    <div
+                        style={{
+                            fontSize: "18px",
+                            fontWeight: "600",
+                            color: "#6b7280"
+                        }}
+                    >
+                        Location unavailable
+                    </div>
+
+
+                    <div
+                        style={{
+                            marginTop: "6px",
+                            fontSize: "14px",
+                            color: "#9ca3af"
+                        }}
+                    >
+                        Waiting for location data...
+                    </div>
+
+                </div>
+
             </div>
+
         );
+
     }
 
 
-    // --------------------------------------------------
-    // POSITIONS
-    // --------------------------------------------------
+    // ==================================================
+    // CONVERT TO NUMBERS
+    // ==================================================
 
     const customerLatLng = [
-        Number(customerPosition[0]),
-        Number(customerPosition[1])
+        Number(
+            customerPosition[0]
+        ),
+        Number(
+            customerPosition[1]
+        )
     ];
 
+
     const deliveryBoyLatLng = [
-        Number(deliveryBoyPosition[0]),
-        Number(deliveryBoyPosition[1])
+        Number(
+            deliveryBoyPosition[0]
+        ),
+        Number(
+            deliveryBoyPosition[1]
+        )
     ];
 
 
@@ -161,15 +367,16 @@ const DeliveryTrackingMap = ({
         customerLatLng
     );
 
+
     console.log(
         "DELIVERY BOY LAT LNG:",
         deliveryBoyLatLng
     );
 
 
-    // --------------------------------------------------
-    // DEFAULT CENTER
-    // --------------------------------------------------
+    // ==================================================
+    // CENTER
+    // ==================================================
 
     const center = [
         (
@@ -184,18 +391,20 @@ const DeliveryTrackingMap = ({
     ];
 
 
+    // ==================================================
+    // RETURN MAP
+    // ==================================================
+
     return (
 
         <div
             style={{
                 width: "100%",
                 height: "400px",
-                marginTop: "20px",
-                marginBottom: "20px",
+                minHeight: "400px",
                 position: "relative",
-                zIndex: 1,
-                border: "4px solid blue",
-                background: "#ddd"
+                overflow: "hidden",
+                borderRadius: "12px"
             }}
         >
 
@@ -215,14 +424,22 @@ const DeliveryTrackingMap = ({
 
             >
 
+                {/* ======================================
+                    OPEN STREET MAP
+                ====================================== */}
+
                 <TileLayer
 
-                    attribution='&copy; OpenStreetMap contributors'
+                    attribution="&copy; OpenStreetMap contributors"
 
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 
                 />
 
+
+                {/* ======================================
+                    MAP CONTROLLER
+                ====================================== */}
 
                 <MapController
 
@@ -237,45 +454,67 @@ const DeliveryTrackingMap = ({
                 />
 
 
-                {/* CUSTOMER */}
+                {/* ======================================
+                    CUSTOMER MARKER
+                ====================================== */}
 
                 <Marker
-                    position={customerLatLng}
+                    position={
+                        customerLatLng
+                    }
                 >
 
                     <Popup>
-                        Customer Location
+
+                        <strong>
+                            Customer Location
+                        </strong>
+
                     </Popup>
 
                 </Marker>
 
 
-                {/* DELIVERY BOY */}
+                {/* ======================================
+                    DELIVERY BOY MARKER
+                ====================================== */}
 
                 <Marker
-                    position={deliveryBoyLatLng}
+                    position={
+                        deliveryBoyLatLng
+                    }
                 >
 
                     <Popup>
-                        Delivery Boy Location
+
+                        <strong>
+                            Delivery Boy Location
+                        </strong>
+
                     </Popup>
 
                 </Marker>
 
 
-                {/* ROUTE */}
+                {/* ======================================
+                    ROUTE LINE
+                ====================================== */}
 
                 <Polyline
+
                     positions={[
                         deliveryBoyLatLng,
                         customerLatLng
                     ]}
+
                 />
 
             </MapContainer>
 
         </div>
+
     );
+
 };
 
 
