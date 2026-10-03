@@ -15,11 +15,21 @@ const useGetMyShop = () => {
 
             try {
 
+                const token =
+                    localStorage.getItem("token");
+
                 const result =
                     await axios.get(
                         `${serverUrl}/api/shop/get-my`,
                         {
                             withCredentials: true,
+
+                            headers: token
+                                ? {
+                                    Authorization:
+                                        `Bearer ${token}`
+                                }
+                                : {}
                         }
                     );
 
@@ -27,9 +37,6 @@ const useGetMyShop = () => {
                     "MY SHOP:",
                     result.data
                 );
-
-                // Backend returns:
-                // { success: true, shop: {...} }
 
                 dispatch(
                     setMyShopData(

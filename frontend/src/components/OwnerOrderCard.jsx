@@ -46,16 +46,62 @@ function OwnerOrderCard({
             setUpdating(true);
 
 
+            // =================================================
+            // GET TOKEN
+            // =================================================
+
+            const token =
+                localStorage.getItem("token");
+
+
             console.log(
                 "Updating order:",
                 {
                     orderId,
                     shopId,
                     shopOrderId,
-                    status
+                    status,
+                    hasToken: !!token
                 }
             );
 
+
+            if (!orderId) {
+
+                alert(
+                    "Main Order ID is missing."
+                );
+
+                return;
+
+            }
+
+
+            if (!shopId) {
+
+                alert(
+                    "Shop ID is missing."
+                );
+
+                return;
+
+            }
+
+
+            if (!token) {
+
+                alert(
+                    "Your login session has expired. Please login again."
+                );
+
+                return;
+
+            }
+
+
+            // =================================================
+            // UPDATE ORDER STATUS
+            // =================================================
 
             const result =
                 await axios.put(
@@ -67,7 +113,12 @@ function OwnerOrderCard({
                     },
 
                     {
-                        withCredentials: true
+                        withCredentials: true,
+
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`
+                        }
                     }
 
                 );
@@ -369,15 +420,6 @@ function OwnerOrderCard({
                     order.shopOrders?.map(
                         (shopOrder) => {
 
-                            /*
-                             * IMPORTANT
-                             *
-                             * shop can be:
-                             *
-                             * 1. populated object
-                             * 2. ObjectId/string
-                             */
-
                             const shopId =
                                 typeof shopOrder.shop ===
                                     "object"
@@ -635,9 +677,9 @@ function OwnerOrderCard({
                                     </div>
 
 
-                                    {/* =====================================
+                                    {/* =================================================
                                         DELIVERY SECTION
-                                    ====================================== */}
+                                    ================================================= */}
 
                                     {
                                         shopOrder.status ===
@@ -650,10 +692,6 @@ function OwnerOrderCard({
                                                     pt-3
                                                 "
                                             >
-
-                                                {/* =================================
-                                                    DELIVERY BOY ACCEPTED
-                                                ================================== */}
 
                                                 {
                                                     assignedDeliveryBoy ? (
@@ -719,8 +757,6 @@ function OwnerOrderCard({
                                                             </div>
 
 
-                                                            {/* NAME */}
-
                                                             <div
                                                                 className="
                                                                     flex
@@ -757,8 +793,6 @@ function OwnerOrderCard({
 
                                                             </div>
 
-
-                                                            {/* MOBILE */}
 
                                                             <div
                                                                 className="
@@ -808,8 +842,6 @@ function OwnerOrderCard({
                                                             </div>
 
 
-                                                            {/* EMAIL */}
-
                                                             <div
                                                                 className="
                                                                     flex
@@ -850,10 +882,6 @@ function OwnerOrderCard({
                                                         </div>
 
                                                     ) : (
-
-                                                        /* =================================
-                                                            DELIVERY BOYS WAITING
-                                                        ================================== */
 
                                                         (
                                                             broadcastedBoys.length >
@@ -973,10 +1001,6 @@ function OwnerOrderCard({
 
                                                         ) : (
 
-                                                            /* =================================
-                                                                NO DELIVERY BOY
-                                                            ================================== */
-
                                                             <div
                                                                 className="
                                                                     bg-orange-50
@@ -1022,9 +1046,9 @@ function OwnerOrderCard({
                                     }
 
 
-                                    {/* =====================================
+                                    {/* =================================================
                                         DELIVERED STATUS
-                                    ====================================== */}
+                                    ================================================= */}
 
                                     {
                                         shopOrder.status ===

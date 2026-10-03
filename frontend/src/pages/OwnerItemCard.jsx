@@ -3,29 +3,45 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FaEdit, FaTrash } from "react-icons/fa";
+
 import { serverUrl } from "../App";
 import { setMyShopData } from "../redux/ownerSlice";
 
 const OwnerItemCard = ({ item }) => {
+
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const handleDelete = async () => {
-        const confirmDelete = window.confirm(
-            `Are you sure you want to delete ${item.name}?`
-        );
+
+        const confirmDelete =
+            window.confirm(
+                `Are you sure you want to delete ${item.name}?`
+            );
 
         if (!confirmDelete) {
             return;
         }
 
         try {
-            const result = await axios.delete(
-                `${serverUrl}/api/item/delete-item/${item._id}`,
-                {
-                    withCredentials: true,
-                }
-            );
+
+            const token =
+                localStorage.getItem("token");
+
+            const result =
+                await axios.delete(
+                    `${serverUrl}/api/item/delete-item/${item._id}`,
+                    {
+                        withCredentials: true,
+
+                        headers: token
+                            ? {
+                                Authorization:
+                                    `Bearer ${token}`
+                            }
+                            : {}
+                    }
+                );
 
             console.log(
                 "DELETE ITEM RESPONSE:",
@@ -33,16 +49,24 @@ const OwnerItemCard = ({ item }) => {
             );
 
             if (result.data.shop) {
+
                 dispatch(
-                    setMyShopData(result.data.shop)
+                    setMyShopData(
+                        result.data.shop
+                    )
                 );
             }
 
-            alert("Food item deleted successfully");
+            alert(
+                "Food item deleted successfully"
+            );
+
         } catch (error) {
+
             console.log(
                 "DELETE ITEM ERROR:",
-                error.response?.data || error.message
+                error.response?.data ||
+                error.message
             );
 
             alert(
@@ -66,6 +90,7 @@ const OwnerItemCard = ({ item }) => {
                 <div className="flex justify-between gap-2">
 
                     <div>
+
                         <h3 className="font-bold text-gray-800">
                             {item.name}
                         </h3>
@@ -73,6 +98,7 @@ const OwnerItemCard = ({ item }) => {
                         <p className="text-xs text-gray-500 mt-1">
                             {item.category}
                         </p>
+
                     </div>
 
                     <p className="font-bold text-[#ff4d2d]">
