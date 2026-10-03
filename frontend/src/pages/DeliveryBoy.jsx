@@ -39,21 +39,17 @@ const calculateDistance = (
         return null;
     }
 
-
     const earthRadius = 6371000;
-
 
     const latitude1 =
         position1[0] *
         Math.PI /
         180;
 
-
     const latitude2 =
         position2[0] *
         Math.PI /
         180;
-
 
     const differenceLatitude =
         (
@@ -63,7 +59,6 @@ const calculateDistance = (
         Math.PI /
         180;
 
-
     const differenceLongitude =
         (
             position2[1] -
@@ -71,7 +66,6 @@ const calculateDistance = (
         ) *
         Math.PI /
         180;
-
 
     const a =
         Math.sin(
@@ -91,7 +85,6 @@ const calculateDistance = (
             differenceLongitude / 2
         );
 
-
     const c =
         2 *
         Math.atan2(
@@ -99,14 +92,13 @@ const calculateDistance = (
             Math.sqrt(1 - a)
         );
 
-
-    return (
-        earthRadius *
-        c
-    );
-
+    return earthRadius * c;
 };
 
+
+// =====================================================
+// DELIVERY BOY
+// =====================================================
 
 const DeliveryBoy = () => {
 
@@ -155,7 +147,7 @@ const DeliveryBoy = () => {
 
 
     // =====================================================
-    // OTP GENERATED STATE
+    // OTP GENERATED
     // =====================================================
 
     const [
@@ -200,11 +192,9 @@ const DeliveryBoy = () => {
                             "token"
                         );
 
-
                     if (!token) {
                         return;
                     }
-
 
                     const result =
                         await axios.get(
@@ -219,18 +209,10 @@ const DeliveryBoy = () => {
                             }
                         );
 
-
-                    console.log(
-                        "DELIVERY REQUEST RESPONSE:",
-                        result.data
-                    );
-
-
                     setDeliveryRequests(
-                        result.data.requests ||
+                        result.data?.requests ||
                         []
                     );
-
 
                 } catch (error) {
 
@@ -267,7 +249,7 @@ const DeliveryBoy = () => {
 
 
     // =====================================================
-    // DELIVERY BOY LIVE LOCATION
+    // LIVE DELIVERY BOY LOCATION
     // =====================================================
 
     useEffect(() => {
@@ -276,14 +258,12 @@ const DeliveryBoy = () => {
             return;
         }
 
-
         if (
             userData.role !==
             "deliveryBoy"
         ) {
             return;
         }
-
 
         if (
             !navigator.geolocation
@@ -294,7 +274,6 @@ const DeliveryBoy = () => {
             );
 
             return;
-
         }
 
 
@@ -306,29 +285,13 @@ const DeliveryBoy = () => {
                     const latitude =
                         position.coords.latitude;
 
-
                     const longitude =
                         position.coords.longitude;
 
-
-                    const newPosition = [
+                    setDeliveryBoyPosition([
                         latitude,
                         longitude
-                    ];
-
-
-                    console.log(
-                        "Current delivery boy location:",
-                        {
-                            latitude,
-                            longitude
-                        }
-                    );
-
-
-                    setDeliveryBoyPosition(
-                        newPosition
-                    );
+                    ]);
 
                 },
 
@@ -375,7 +338,6 @@ const DeliveryBoy = () => {
                         "token"
                     );
 
-
                 if (!token) {
 
                     alert(
@@ -383,7 +345,6 @@ const DeliveryBoy = () => {
                     );
 
                     return;
-
                 }
 
 
@@ -421,7 +382,6 @@ const DeliveryBoy = () => {
 
                 await refetchOrders();
 
-
             } catch (error) {
 
                 console.log(
@@ -429,7 +389,6 @@ const DeliveryBoy = () => {
                     error.response?.data ||
                     error.message
                 );
-
 
                 alert(
                     error.response?.data?.message ||
@@ -499,7 +458,7 @@ const DeliveryBoy = () => {
                 }
 
 
-                const customerLatitude =
+                const latitude =
                     Number(
                         order
                             ?.deliveryAddress
@@ -507,7 +466,7 @@ const DeliveryBoy = () => {
                     );
 
 
-                const customerLongitude =
+                const longitude =
                     Number(
                         order
                             ?.deliveryAddress
@@ -515,23 +474,25 @@ const DeliveryBoy = () => {
                     );
 
 
-                const validCustomerPosition =
-                    Number.isFinite(
-                        customerLatitude
-                    ) &&
+                if (
+                    !Number.isFinite(latitude) ||
+                    !Number.isFinite(longitude)
+                ) {
 
-                    Number.isFinite(
-                        customerLongitude
-                    );
+                    return {
+                        order,
+                        shopOrder,
+                        customerPosition: null,
+                        distance: null
+                    };
+
+                }
 
 
-                const customerPosition =
-                    validCustomerPosition
-                        ? [
-                            customerLatitude,
-                            customerLongitude
-                        ]
-                        : null;
+                const customerPosition = [
+                    latitude,
+                    longitude
+                ];
 
 
                 const distance =
@@ -542,15 +503,10 @@ const DeliveryBoy = () => {
 
 
                 return {
-
                     order,
-
                     shopOrder,
-
                     customerPosition,
-
                     distance
-
                 };
 
             })
@@ -567,18 +523,15 @@ const DeliveryBoy = () => {
             "========== DELIVERY UI =========="
         );
 
-
         console.log(
             "ACTIVE DELIVERIES:",
             activeDeliveries
         );
 
-
         console.log(
             "DELIVERY BOY POSITION:",
             deliveryBoyPosition
         );
-
 
         activeDeliveries.forEach(
             (
@@ -604,7 +557,6 @@ const DeliveryBoy = () => {
 
             }
         );
-
 
         console.log(
             "================================"
@@ -649,7 +601,6 @@ const DeliveryBoy = () => {
                     );
 
                     return;
-
                 }
 
 
@@ -703,7 +654,6 @@ const DeliveryBoy = () => {
 
                 await refetchOrders();
 
-
             } catch (error) {
 
                 console.log(
@@ -735,11 +685,13 @@ const DeliveryBoy = () => {
 
 
     // =====================================================
-    // VERIFY DELIVERY OTP
+    // VERIFY OTP
     // =====================================================
 
     const verifyDeliveryOtp =
-        async (assignmentId) => {
+        async (
+            assignmentId
+        ) => {
 
             try {
 
@@ -758,7 +710,6 @@ const DeliveryBoy = () => {
                     );
 
                     return;
-
                 }
 
 
@@ -785,7 +736,6 @@ const DeliveryBoy = () => {
                     );
 
                     return;
-
                 }
 
 
@@ -826,11 +776,9 @@ const DeliveryBoy = () => {
                             ...prev
                         };
 
-
                         delete updated[
                             assignmentId
                         ];
-
 
                         return updated;
 
@@ -845,11 +793,9 @@ const DeliveryBoy = () => {
                             ...prev
                         };
 
-
                         delete updated[
                             assignmentId
                         ];
-
 
                         return updated;
 
@@ -858,7 +804,6 @@ const DeliveryBoy = () => {
 
 
                 await refetchOrders();
-
 
             } catch (error) {
 
@@ -967,11 +912,7 @@ const DeliveryBoy = () => {
                 {deliveryRequests.length >
                     0 && (
 
-                    <div
-                        className="
-                            mb-8
-                        "
-                    >
+                    <div className="mb-8">
 
                         <h2
                             className="
@@ -984,19 +925,13 @@ const DeliveryBoy = () => {
                         </h2>
 
 
-                        <div
-                            className="
-                                grid
-                                gap-4
-                            "
-                        >
+                        <div className="grid gap-4">
 
                             {deliveryRequests.map(
                                 (request) => {
 
                                     const order =
                                         request?.order;
-
 
                                     const shopOrder =
                                         request?.shopOrder;
@@ -1024,6 +959,7 @@ const DeliveryBoy = () => {
                                                     items-center
                                                     justify-between
                                                     mb-4
+                                                    gap-4
                                                 "
                                             >
 
@@ -1066,6 +1002,7 @@ const DeliveryBoy = () => {
                                                         text-sm
                                                         font-semibold
                                                         text-orange-500
+                                                        whitespace-nowrap
                                                     "
                                                 >
                                                     {
@@ -1191,10 +1128,21 @@ const DeliveryBoy = () => {
                                         distance <= 200;
 
 
+                                    const backendOtpActive =
+                                        Boolean(
+                                            shopOrder
+                                                ?.deliveryOtpExpiresAt
+                                        ) &&
+                                        shopOrder
+                                            ?.deliveryOtpVerified !==
+                                        true;
+
+
                                     const hasOtp =
                                         otpGenerated[
                                             assignmentId
-                                        ] === true;
+                                        ] === true ||
+                                        backendOtpActive;
 
 
                                     return (
@@ -1214,9 +1162,9 @@ const DeliveryBoy = () => {
                                             "
                                         >
 
-                                            {/* ==========================
+                                            {/* =========================
                                                 HEADER
-                                            ========================== */}
+                                            ========================= */}
 
                                             <div
                                                 className="
@@ -1249,10 +1197,9 @@ const DeliveryBoy = () => {
                                                         "
                                                     >
                                                         Order #
-                                                        {order?._id
-                                                            ?.slice(
-                                                                -6
-                                                            )}
+                                                        {order?._id?.slice(
+                                                            -6
+                                                        )}
                                                     </p>
 
                                                 </div>
@@ -1276,9 +1223,9 @@ const DeliveryBoy = () => {
                                             </div>
 
 
-                                            {/* ==========================
+                                            {/* =========================
                                                 CUSTOMER
-                                            ========================== */}
+                                            ========================= */}
 
                                             <div
                                                 className="
@@ -1369,9 +1316,9 @@ const DeliveryBoy = () => {
                                             </div>
 
 
-                                            {/* ==========================
-                                                LIVE MAP
-                                            ========================== */}
+                                            {/* =========================
+                                                MAP
+                                            ========================= */}
 
                                             {customerPosition &&
                                                 deliveryBoyPosition ? (
@@ -1424,9 +1371,9 @@ const DeliveryBoy = () => {
                                             )}
 
 
-                                            {/* ==========================
-                                                DISTANCE STATUS
-                                            ========================== */}
+                                            {/* =========================
+                                                DISTANCE
+                                            ========================= */}
 
                                             {distance !== null && (
 
@@ -1438,17 +1385,10 @@ const DeliveryBoy = () => {
                                                         rounded-xl
                                                         text-center
                                                         border
-
                                                         ${
                                                             within200Meters
-                                                                ? `
-                                                                    bg-green-50
-                                                                    border-green-200
-                                                                `
-                                                                : `
-                                                                    bg-orange-50
-                                                                    border-orange-200
-                                                                `
+                                                                ? "bg-green-50 border-green-200"
+                                                                : "bg-orange-50 border-orange-200"
                                                         }
                                                     `}
                                                 >
@@ -1468,7 +1408,6 @@ const DeliveryBoy = () => {
                                                             text-2xl
                                                             font-bold
                                                             mt-1
-
                                                             ${
                                                                 within200Meters
                                                                     ? "text-green-600"
@@ -1539,9 +1478,9 @@ const DeliveryBoy = () => {
                                             )}
 
 
-                                            {/* ==========================
-                                                MARK DELIVERY / OTP
-                                            ========================== */}
+                                            {/* =========================
+                                                DELIVERY ACTION
+                                            ========================= */}
 
                                             <div
                                                 className="
@@ -1549,10 +1488,6 @@ const DeliveryBoy = () => {
                                                     py-5
                                                 "
                                             >
-
-                                                {/* ======================
-                                                    MARK DELIVERY BUTTON
-                                                ====================== */}
 
                                                 {!hasOtp && (
 
@@ -1576,19 +1511,10 @@ const DeliveryBoy = () => {
                                                             rounded-lg
                                                             font-semibold
                                                             transition
-
                                                             ${
                                                                 within200Meters
-                                                                    ? `
-                                                                        bg-[#ff4d2d]
-                                                                        text-white
-                                                                        hover:opacity-90
-                                                                    `
-                                                                    : `
-                                                                        bg-gray-300
-                                                                        text-gray-500
-                                                                        cursor-not-allowed
-                                                                    `
+                                                                    ? "bg-[#ff4d2d] text-white hover:opacity-90"
+                                                                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
                                                             }
                                                         `}
                                                     >
@@ -1600,9 +1526,7 @@ const DeliveryBoy = () => {
                                                             ? "Checking location..."
 
                                                             : within200Meters
-
                                                                 ? "Mark as Delivered"
-
                                                                 : "Move within 200 metres"}
 
                                                     </button>
@@ -1610,9 +1534,9 @@ const DeliveryBoy = () => {
                                                 )}
 
 
-                                                {/* ======================
-                                                    OTP SECTION
-                                                ====================== */}
+                                                {/* =========================
+                                                    OTP
+                                                ========================= */}
 
                                                 {hasOtp && (
 
