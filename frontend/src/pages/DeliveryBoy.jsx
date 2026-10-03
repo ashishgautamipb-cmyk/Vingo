@@ -64,6 +64,16 @@ const calculateDistance = (
 
     const earthRadius = 6371000;
 
+    const differenceLatitude =
+        (latitude2 - latitude1) *
+        Math.PI /
+        180;
+
+    const differenceLongitude =
+        (longitude2 - longitude1) *
+        Math.PI /
+        180;
+
     const lat1 =
         latitude1 *
         Math.PI /
@@ -71,22 +81,6 @@ const calculateDistance = (
 
     const lat2 =
         latitude2 *
-        Math.PI /
-        180;
-
-    const differenceLatitude =
-        (
-            latitude2 -
-            latitude1
-        ) *
-        Math.PI /
-        180;
-
-    const differenceLongitude =
-        (
-            longitude2 -
-            longitude1
-        ) *
         Math.PI /
         180;
 
@@ -124,15 +118,6 @@ const calculateDistance = (
 // =====================================================
 
 const DeliveryBoy = () => {
-
-    console.log(
-        "🔥 DELIVERY BOY RENDER START"
-    );
-
-
-    // =====================================================
-    // USER
-    // =====================================================
 
     const {
         userData
@@ -188,21 +173,17 @@ const DeliveryBoy = () => {
 
 
     // =====================================================
-    // COMPONENT MOUNT DEBUG
+    // USER DEBUG
     // =====================================================
 
     useEffect(() => {
 
         console.log(
-            "=========================================="
+            "========== DELIVERY BOY =========="
         );
 
         console.log(
-            "DELIVERY BOY COMPONENT MOUNTED"
-        );
-
-        console.log(
-            "USER DATA:",
+            "USER:",
             {
                 id: userData?._id,
                 role: userData?.role,
@@ -211,19 +192,22 @@ const DeliveryBoy = () => {
         );
 
         console.log(
-            "ORDERS COUNT:",
+            "ORDERS:",
             orders?.length || 0
         );
 
         console.log(
-            "=========================================="
+            "=================================="
         );
 
-    }, [userData, orders]);
+    }, [
+        userData,
+        orders
+    ]);
 
 
     // =====================================================
-    // GET DELIVERY REQUESTS
+    // DELIVERY REQUESTS
     // =====================================================
 
     useEffect(() => {
@@ -239,11 +223,15 @@ const DeliveryBoy = () => {
                         );
 
                     if (!token) {
+
                         console.log(
                             "DELIVERY REQUEST: TOKEN NOT FOUND"
                         );
+
                         return;
+
                     }
+
 
                     const result =
                         await axios.get(
@@ -258,10 +246,12 @@ const DeliveryBoy = () => {
                             }
                         );
 
+
                     console.log(
                         "DELIVERY REQUEST RESPONSE:",
                         result.data
                     );
+
 
                     setDeliveryRequests(
                         result.data?.requests ||
@@ -333,10 +323,14 @@ const DeliveryBoy = () => {
 
 
         const longitude =
-            Number(coordinates[0]);
+            Number(
+                coordinates[0]
+            );
 
         const latitude =
-            Number(coordinates[1]);
+            Number(
+                coordinates[1]
+            );
 
 
         if (
@@ -361,7 +355,7 @@ const DeliveryBoy = () => {
 
 
         console.log(
-            "SETTING POSITION FROM REDUX:",
+            "SETTING DELIVERY BOY POSITION FROM REDUX:",
             position
         );
 
@@ -370,7 +364,9 @@ const DeliveryBoy = () => {
             position
         );
 
-    }, [userData]);
+    }, [
+        userData
+    ]);
 
 
     // =====================================================
@@ -422,7 +418,7 @@ const DeliveryBoy = () => {
         );
 
 
-        const handleLocation =
+        const updatePosition =
             (position) => {
 
                 const latitude =
@@ -481,7 +477,7 @@ const DeliveryBoy = () => {
 
 
         navigator.geolocation.getCurrentPosition(
-            handleLocation,
+            updatePosition,
             handleError,
             {
                 enableHighAccuracy: true,
@@ -493,7 +489,7 @@ const DeliveryBoy = () => {
 
         const watchId =
             navigator.geolocation.watchPosition(
-                handleLocation,
+                updatePosition,
                 handleError,
                 {
                     enableHighAccuracy: true,
@@ -511,7 +507,9 @@ const DeliveryBoy = () => {
 
         };
 
-    }, [userData]);
+    }, [
+        userData
+    ]);
 
 
     // =====================================================
@@ -575,7 +573,6 @@ const DeliveryBoy = () => {
 
                 await refetchOrders();
 
-
             } catch (error) {
 
                 console.log(
@@ -614,17 +611,6 @@ const DeliveryBoy = () => {
             }
 
 
-            console.log(
-                "CHECKING ORDER FOR DELIVERY:",
-                {
-                    orderId: order?._id,
-                    currentUserId: userData?._id,
-                    shopOrders:
-                        order.shopOrders.length
-                }
-            );
-
-
             return (
                 order.shopOrders.find(
                     (shopOrder) => {
@@ -635,11 +621,6 @@ const DeliveryBoy = () => {
 
 
                         if (!assignment) {
-
-                            console.log(
-                                "SHOP ORDER HAS NO ASSIGNMENT:",
-                                shopOrder?._id
-                            );
 
                             return false;
 
@@ -656,43 +637,6 @@ const DeliveryBoy = () => {
                             "out for delivery";
 
 
-                        console.log(
-                            "SHOP ORDER CHECK:",
-                            {
-                                shopOrderId:
-                                    shopOrder?._id,
-
-                                shopOrderStatus:
-                                    shopOrder.status,
-
-                                assignmentId:
-                                    assignment?._id,
-
-                                assignmentStatus:
-                                    assignment?.status,
-
-                                assignedTo:
-                                    assignment?.assignedTo,
-
-                                currentUserId:
-                                    userData?._id,
-
-                                isAssigned,
-
-                                isOutForDelivery
-                            }
-                        );
-
-
-                        /*
-                         * getMyOrders() from the backend already
-                         * returns assignments belonging to the
-                         * current delivery boy.
-                         *
-                         * Therefore we don't additionally require
-                         * assignedTo === current user here.
-                         */
-
                         return (
                             isAssigned &&
                             isOutForDelivery
@@ -706,109 +650,6 @@ const DeliveryBoy = () => {
 
 
     // =====================================================
-    // DETAILED ORDER DEBUG
-    // =====================================================
-
-    useEffect(() => {
-
-        console.log(
-            "========== DELIVERY ORDER STRUCTURE =========="
-        );
-
-
-        console.log(
-            "CURRENT DELIVERY BOY:",
-            {
-                id: userData?._id,
-                role: userData?.role,
-                fullName: userData?.fullName
-            }
-        );
-
-
-        console.log(
-            "TOTAL ORDERS:",
-            orders?.length || 0
-        );
-
-
-        orders?.forEach(
-            (
-                order,
-                orderIndex
-            ) => {
-
-                console.log(
-                    `ORDER ${orderIndex + 1}:`,
-                    order?._id
-                );
-
-
-                console.log(
-                    "CUSTOMER POSITION:",
-                    {
-                        latitude:
-                            order
-                                ?.deliveryAddress
-                                ?.latitude,
-
-                        longitude:
-                            order
-                                ?.deliveryAddress
-                                ?.longitude
-                    }
-                );
-
-
-                order?.shopOrders?.forEach(
-                    (
-                        shopOrder,
-                        shopIndex
-                    ) => {
-
-                        console.log(
-                            `SHOP ORDER ${shopIndex + 1}:`,
-                            {
-                                shopOrderId:
-                                    shopOrder?._id,
-
-                                status:
-                                    shopOrder?.status,
-
-                                deliveryAssignment:
-                                    shopOrder
-                                        ?.deliveryAssignment,
-
-                                assignmentStatus:
-                                    shopOrder
-                                        ?.deliveryAssignment
-                                        ?.status,
-
-                                assignedTo:
-                                    shopOrder
-                                        ?.deliveryAssignment
-                                        ?.assignedTo
-                            }
-                        );
-
-                    }
-                );
-
-            }
-        );
-
-
-        console.log(
-            "=============================================="
-        );
-
-    }, [
-        orders,
-        userData
-    ]);
-
-
-    // =====================================================
     // ACTIVE DELIVERIES
     // =====================================================
 
@@ -818,10 +659,6 @@ const DeliveryBoy = () => {
             if (
                 !Array.isArray(orders)
             ) {
-
-                console.log(
-                    "ACTIVE DELIVERIES: ORDERS IS NOT ARRAY"
-                );
 
                 return [];
 
@@ -884,14 +721,7 @@ const DeliveryBoy = () => {
                                 );
 
 
-                                return {
-                                    order,
-                                    shopOrder,
-                                    customerPosition:
-                                        null,
-                                    distance:
-                                        null
-                                };
+                                return null;
 
                             }
 
@@ -931,28 +761,22 @@ const DeliveryBoy = () => {
 
         }, [
             orders,
-            deliveryBoyPosition,
-            userData
+            deliveryBoyPosition
         ]);
 
 
     // =====================================================
-    // CURRENT DELIVERY FOR MAP
+    // CURRENT DELIVERY
     // =====================================================
 
     const currentDelivery =
-        activeDeliveries.find(
-            (delivery) =>
-                Array.isArray(
-                    delivery.customerPosition
-                ) &&
-                delivery.customerPosition.length ===
-                2
-        ) || null;
+        activeDeliveries.length > 0
+            ? activeDeliveries[0]
+            : null;
 
 
     // =====================================================
-    // MAP DEBUG
+    // DELIVERY UI DEBUG
     // =====================================================
 
     useEffect(() => {
@@ -986,28 +810,28 @@ const DeliveryBoy = () => {
         );
 
 
-        if (currentDelivery) {
-
-            console.log(
-                "MAP CUSTOMER POSITION:",
-                currentDelivery.customerPosition
-            );
-
-        } else {
-
-            console.log(
-                "MAP CUSTOMER POSITION: NONE"
-            );
-
-        }
+        console.log(
+            "MAP CUSTOMER POSITION:",
+            currentDelivery
+                ?.customerPosition ||
+            null
+        );
 
 
         console.log(
             "MAP SHOULD RENDER:",
             Boolean(
                 currentDelivery &&
-                currentDelivery.customerPosition &&
-                deliveryBoyPosition
+                Array.isArray(
+                    currentDelivery.customerPosition
+                ) &&
+                currentDelivery
+                    .customerPosition
+                    .length === 2 &&
+                Array.isArray(
+                    deliveryBoyPosition
+                ) &&
+                deliveryBoyPosition.length === 2
             )
         );
 
@@ -1110,13 +934,17 @@ const DeliveryBoy = () => {
 
                 await refetchOrders();
 
-
             } catch (error) {
 
                 console.log(
                     "Mark delivery error:",
                     error.response?.data ||
                     error.message
+                );
+
+                alert(
+                    error.response?.data?.message ||
+                    "Unable to mark delivery"
                 );
 
             } finally {
@@ -1256,7 +1084,6 @@ const DeliveryBoy = () => {
 
                 await refetchOrders();
 
-
             } catch (error) {
 
                 console.log(
@@ -1304,11 +1131,7 @@ const DeliveryBoy = () => {
                 "
             >
 
-                <p
-                    className="
-                        text-gray-500
-                    "
-                >
+                <p className="text-gray-500">
                     Loading deliveries...
                 </p>
 
@@ -1342,7 +1165,7 @@ const DeliveryBoy = () => {
             >
 
                 {/* =================================================
-                    PAGE TITLE
+                    TITLE
                 ================================================= */}
 
                 <h1
@@ -1358,7 +1181,7 @@ const DeliveryBoy = () => {
 
 
                 {/* =================================================
-                    NEW DELIVERY REQUESTS
+                    DELIVERY REQUESTS
                 ================================================= */}
 
                 {deliveryRequests.length > 0 && (
@@ -1394,7 +1217,6 @@ const DeliveryBoy = () => {
                                             key={
                                                 request._id
                                             }
-
                                             className="
                                                 bg-white
                                                 rounded-xl
@@ -1440,9 +1262,6 @@ const DeliveryBoy = () => {
                                                         {
                                                             order
                                                                 ?.deliveryAddress
-                                                                ?.address ||
-                                                            order
-                                                                ?.deliveryAddress
                                                                 ?.text ||
                                                             "Customer location"
                                                         }
@@ -1474,7 +1293,6 @@ const DeliveryBoy = () => {
                                                         request._id
                                                     )
                                                 }
-
                                                 className="
                                                     w-full
                                                     bg-[#ff4d2d]
@@ -1520,7 +1338,7 @@ const DeliveryBoy = () => {
 
 
                     {/* =================================================
-                        TRACKING MAP
+                        MAP
                     ================================================= */}
 
                     {currentDelivery &&
@@ -1571,8 +1389,8 @@ const DeliveryBoy = () => {
                                         mt-1
                                     "
                                 >
-                                    Tracking your current active
-                                    delivery
+                                    Your location and customer
+                                    location
                                 </p>
 
                             </div>
@@ -1582,7 +1400,8 @@ const DeliveryBoy = () => {
 
                                 <DeliveryTrackingMap
                                     customerPosition={
-                                        currentDelivery.customerPosition
+                                        currentDelivery
+                                            .customerPosition
                                     }
 
                                     deliveryBoyPosition={
@@ -1673,11 +1492,7 @@ const DeliveryBoy = () => {
                             />
 
 
-                            <p
-                                className="
-                                    text-gray-500
-                                "
-                            >
+                            <p className="text-gray-500">
                                 No active deliveries
                             </p>
 
@@ -1685,11 +1500,7 @@ const DeliveryBoy = () => {
 
                     ) : (
 
-                        <div
-                            className="
-                                space-y-6
-                            "
-                        >
+                        <div className="space-y-6">
 
                             {activeDeliveries.map(
                                 ({
@@ -1736,7 +1547,6 @@ const DeliveryBoy = () => {
                                                 assignmentId ||
                                                 shopOrder?._id
                                             }
-
                                             className="
                                                 bg-white
                                                 rounded-xl
@@ -1746,9 +1556,7 @@ const DeliveryBoy = () => {
                                             "
                                         >
 
-                                            {/* =========================
-                                                HEADER
-                                            ========================= */}
+                                            {/* HEADER */}
 
                                             <div
                                                 className="
@@ -1807,9 +1615,7 @@ const DeliveryBoy = () => {
                                             </div>
 
 
-                                            {/* =========================
-                                                CUSTOMER
-                                            ========================= */}
+                                            {/* CUSTOMER */}
 
                                             <div
                                                 className="
@@ -1855,9 +1661,6 @@ const DeliveryBoy = () => {
                                                             {
                                                                 order
                                                                     ?.deliveryAddress
-                                                                    ?.address ||
-                                                                order
-                                                                    ?.deliveryAddress
                                                                     ?.text ||
                                                                 "Customer location"
                                                             }
@@ -1887,7 +1690,6 @@ const DeliveryBoy = () => {
                                                             "
                                                         />
 
-
                                                         <span>
                                                             {
                                                                 order
@@ -1903,9 +1705,7 @@ const DeliveryBoy = () => {
                                             </div>
 
 
-                                            {/* =========================
-                                                DISTANCE
-                                            ========================= */}
+                                            {/* DISTANCE */}
 
                                             {distance !== null && (
 
@@ -1936,16 +1736,11 @@ const DeliveryBoy = () => {
 
 
                                                     <p
-                                                        className={`
+                                                        className="
                                                             text-2xl
                                                             font-bold
                                                             mt-1
-                                                            ${
-                                                                within200Meters
-                                                                    ? "text-green-600"
-                                                                    : "text-orange-600"
-                                                            }
-                                                        `}
+                                                        "
                                                     >
 
                                                         {distance >= 1000
@@ -1992,7 +1787,6 @@ const DeliveryBoy = () => {
                                                             className="
                                                                 mt-2
                                                                 text-orange-600
-                                                                font-medium
                                                             "
                                                         >
 
@@ -2009,9 +1803,7 @@ const DeliveryBoy = () => {
                                             )}
 
 
-                                            {/* =========================
-                                                DELIVERY ACTION
-                                            ========================= */}
+                                            {/* ACTIONS */}
 
                                             <div
                                                 className="
@@ -2028,23 +1820,20 @@ const DeliveryBoy = () => {
                                                                 assignmentId
                                                             )
                                                         }
-
                                                         disabled={
                                                             !within200Meters ||
                                                             markingDelivery[
                                                                 assignmentId
                                                             ]
                                                         }
-
                                                         className={`
                                                             w-full
                                                             py-3
                                                             rounded-lg
                                                             font-semibold
-                                                            transition
                                                             ${
                                                                 within200Meters
-                                                                    ? "bg-[#ff4d2d] text-white hover:opacity-90"
+                                                                    ? "bg-[#ff4d2d] text-white"
                                                                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                                                             }
                                                         `}
@@ -2065,9 +1854,7 @@ const DeliveryBoy = () => {
                                                 )}
 
 
-                                                {/* =========================
-                                                    OTP
-                                                ========================= */}
+                                                {/* OTP */}
 
                                                 {hasOtp && (
 
@@ -2096,15 +1883,14 @@ const DeliveryBoy = () => {
                                                                 "
                                                             />
 
-
                                                             <p
                                                                 className="
                                                                     font-semibold
                                                                     text-green-700
                                                                 "
                                                             >
-                                                                You are at the
-                                                                customer location
+                                                                Customer location
+                                                                reached
                                                             </p>
 
                                                         </div>
@@ -2117,8 +1903,6 @@ const DeliveryBoy = () => {
                                                                 mb-4
                                                             "
                                                         >
-                                                            Delivery OTP has
-                                                            been generated.
                                                             Ask the customer
                                                             for the 6-digit OTP.
                                                         </p>
@@ -2209,8 +1993,6 @@ const DeliveryBoy = () => {
                                                                 rounded-lg
                                                                 font-semibold
                                                                 disabled:opacity-50
-                                                                disabled:cursor-not-allowed
-                                                                hover:bg-green-700
                                                             "
                                                         >
 
