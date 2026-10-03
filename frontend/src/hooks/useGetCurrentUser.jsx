@@ -39,7 +39,12 @@ const useGetCurrentUser = () => {
 
                 console.log(
                     "CURRENT USER:",
-                    result.data
+                    {
+                        id: result.data?._id,
+                        fullName: result.data?.fullName,
+                        email: result.data?.email,
+                        role: result.data?.role
+                    }
                 );
 
                 dispatch(
