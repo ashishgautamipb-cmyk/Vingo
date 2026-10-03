@@ -25,6 +25,7 @@ function useUpdateLocation() {
         }
 
         if (!navigator.geolocation) {
+
             console.log(
                 "Geolocation is not supported"
             );
@@ -40,16 +41,38 @@ function useUpdateLocation() {
 
                 try {
 
+                    // Get JWT token
+                    const token =
+                        localStorage.getItem(
+                            "token"
+                        );
+
+                    if (!token) {
+
+                        console.log(
+                            "Delivery boy token not found"
+                        );
+
+                        return;
+                    }
+
                     const result =
                         await axios.put(
                             `${serverUrl}/api/user/update-location`,
+
                             {
                                 latitude,
                                 longitude
                             },
+
                             {
                                 withCredentials:
-                                    true
+                                    true,
+
+                                headers: {
+                                    Authorization:
+                                        `Bearer ${token}`
+                                }
                             }
                         );
 
@@ -66,8 +89,11 @@ function useUpdateLocation() {
                             ?.data ||
                         error.message
                     );
+
                 }
+
             };
+
 
         const watchId =
             navigator.geolocation.watchPosition(
@@ -94,6 +120,7 @@ function useUpdateLocation() {
                         latitude,
                         longitude
                     );
+
                 },
 
                 (error) => {
@@ -102,6 +129,7 @@ function useUpdateLocation() {
                         "Location error:",
                         error.message
                     );
+
                 },
 
                 {
@@ -114,7 +142,9 @@ function useUpdateLocation() {
                     maximumAge:
                         10000
                 }
+
             );
+
 
         return () => {
 
@@ -126,7 +156,9 @@ function useUpdateLocation() {
 
     }, [userData]);
 
+
     return null;
+
 }
 
 export default useUpdateLocation;
