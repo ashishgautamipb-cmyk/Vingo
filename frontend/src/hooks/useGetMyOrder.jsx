@@ -98,41 +98,61 @@ const useGetMyOrders = () => {
                                 ) => {
 
                                     console.log(
-                                        `SHOP ORDER ${
-                                            shopIndex + 1
-                                        }:`,
-                                        {
-                                            shopOrderId:
-                                                shopOrder?._id,
+                                        "========== DELIVERY DATA =========="
+                                    );
 
-                                            status:
-                                                shopOrder?.status,
+                                    console.log(
+                                        "ORDER ID:",
+                                        order?._id
+                                    );
 
-                                            assignmentId:
-                                                shopOrder
-                                                    ?.deliveryAssignment
-                                                    ?._id,
+                                    console.log(
+                                        "SHOP ORDER ID:",
+                                        shopOrder?._id
+                                    );
 
-                                            assignmentStatus:
-                                                shopOrder
-                                                    ?.deliveryAssignment
-                                                    ?.status,
+                                    console.log(
+                                        "SHOP ORDER STATUS:",
+                                        shopOrder?.status
+                                    );
 
-                                            assignedTo:
-                                                shopOrder
-                                                    ?.deliveryAssignment
-                                                    ?.assignedTo,
+                                    console.log(
+                                        "ASSIGNMENT ID:",
+                                        shopOrder
+                                            ?.deliveryAssignment
+                                            ?._id
+                                    );
 
-                                            customerLatitude:
-                                                order
-                                                    ?.deliveryAddress
-                                                    ?.latitude,
+                                    console.log(
+                                        "ASSIGNMENT STATUS:",
+                                        shopOrder
+                                            ?.deliveryAssignment
+                                            ?.status
+                                    );
 
-                                            customerLongitude:
-                                                order
-                                                    ?.deliveryAddress
-                                                    ?.longitude
-                                        }
+                                    console.log(
+                                        "CUSTOMER LATITUDE:",
+                                        order
+                                            ?.deliveryAddress
+                                            ?.latitude
+                                    );
+
+                                    console.log(
+                                        "CUSTOMER LONGITUDE:",
+                                        order
+                                            ?.deliveryAddress
+                                            ?.longitude
+                                    );
+
+                                    console.log(
+                                        "CUSTOMER ADDRESS:",
+                                        order
+                                            ?.deliveryAddress
+                                            ?.address
+                                    );
+
+                                    console.log(
+                                        "=================================="
                                     );
 
                                 }
