@@ -5,118 +5,180 @@ import React, {
 
 import axios from "axios";
 
+import { useSelector } from "react-redux";
+
 import {
-    serverUrl
-} from "../App";
+    FaLocationDot,
+    FaCheck,
+    FaTruck,
+    FaPhone
+} from "react-icons/fa6";
+
+import { serverUrl } from "../App";
 
 import useGetMyOrders from "../hooks/useGetMyOrder";
 
-import DeliveryTrackingMap from "../components/DeliveryTrackingMap";
+import DeliveryTrackingMap
+    from "../components/DeliveryTrackingMap";
 
 
-// ======================================================
-// DELIVERY BOY
-// ======================================================
+const DeliveryBoy = () => {
 
-function DeliveryBoy() {
+    const {
+        userData
+    } = useSelector(
+        (state) => state.user
+    );
 
-    // ==================================================
-    // DELIVERY REQUESTS
-    // ==================================================
-
-    const [
-        assignments,
-        setAssignments
-    ] = useState([]);
-
-    const [
-        loading,
-        setLoading
-    ] = useState(true);
-
-    const [
-        acceptingId,
-        setAcceptingId
-    ] = useState(null);
-
-    const [
-        error,
-        setError
-    ] = useState("");
-
-
-    // ==================================================
-    // ACCEPTED ORDERS
-    // ==================================================
 
     const {
         orders,
-        loading: ordersLoading,
+        loading,
         refetchOrders
     } = useGetMyOrders();
 
 
-    // ==================================================
-    // DELIVERY BOY GPS LOCATION
-    // ==================================================
+    const [
+        deliveryRequests,
+        setDeliveryRequests
+    ] = useState([]);
+
 
     const [
         deliveryBoyPosition,
         setDeliveryBoyPosition
     ] = useState(null);
 
-    const [
-        locationError,
-        setLocationError
-    ] = useState("");
-
-
-    // ==================================================
-    // MARK DELIVERY LOADING
-    // ==================================================
 
     const [
-        markingDeliveryId,
-        setMarkingDeliveryId
-    ] = useState(null);
-
-
-    // ==================================================
-    // OTP INPUT
-    // ==================================================
-
-    const [
-        otpValues,
-        setOtpValues
+        otpInputs,
+        setOtpInputs
     ] = useState({});
 
 
     const [
-        verifyingOtpId,
-        setVerifyingOtpId
-    ] = useState(null);
-
-
-    // ==================================================
-    // OTP GENERATED STATE
-    // ==================================================
-
-    const [
-        otpGenerated,
-        setOtpGenerated
+        verifyingOtp,
+        setVerifyingOtp
     ] = useState({});
 
 
-    // ==================================================
-    // GET DELIVERY BOY LOCATION
-    // ==================================================
+    const [
+        markingDelivery,
+        setMarkingDelivery
+    ] = useState({});
+
+
+    // =====================================================
+    // GET DELIVERY REQUESTS
+    // =====================================================
 
     useEffect(() => {
 
-        if (!navigator.geolocation) {
+        const getDeliveryRequests =
+            async () => {
 
-            setLocationError(
-                "Geolocation is not supported by your browser."
+                try {
+
+                    const token =
+                        localStorage.getItem(
+                            "token"
+                        );
+
+                    if (!token) {
+                        return;
+                    }
+
+
+                    console.log(
+                        "DELIVERY BOY TOKEN:",
+                        !!token
+                    );
+
+
+                    const result =
+                        await axios.get(
+                            `${serverUrl}/api/order/delivery-requests`,
+                            {
+                                withCredentials: true,
+
+                                headers: {
+                                    Authorization:
+                                        `Bearer ${token}`
+                                }
+                            }
+                        );
+
+
+                    console.log(
+                        "DELIVERY REQUEST RESPONSE:",
+                        result.data
+                    );
+
+
+                    setDeliveryRequests(
+                        result.data.requests ||
+                        []
+                    );
+
+
+                } catch (error) {
+
+                    console.log(
+                        "Get delivery requests error:",
+                        error.response?.data ||
+                        error.message
+                    );
+
+                }
+
+            };
+
+
+        getDeliveryRequests();
+
+
+        const interval =
+            setInterval(
+                getDeliveryRequests,
+                5000
+            );
+
+
+        return () => {
+
+            clearInterval(
+                interval
+            );
+
+        };
+
+    }, []);
+
+
+    // =====================================================
+    // DELIVERY BOY LIVE LOCATION
+    // =====================================================
+
+    useEffect(() => {
+
+        if (!userData) {
+            return;
+        }
+
+        if (
+            userData.role !==
+            "deliveryBoy"
+        ) {
+            return;
+        }
+
+
+        if (
+            !navigator.geolocation
+        ) {
+
+            console.log(
+                "Geolocation is not supported"
             );
 
             return;
@@ -136,32 +198,35 @@ function DeliveryBoy() {
                         position.coords.longitude;
 
 
+                    console.log(
+                        "Current delivery boy location:",
+                        {
+                            latitude,
+                            longitude
+                        }
+                    );
+
+
                     setDeliveryBoyPosition([
                         latitude,
                         longitude
                     ]);
-
-                    setLocationError("");
 
                 },
 
                 (error) => {
 
                     console.log(
-                        "Location error:",
-                        error
-                    );
-
-                    setLocationError(
-                        "Please allow location access to track your delivery."
+                        "Delivery boy location error:",
+                        error.message
                     );
 
                 },
 
                 {
                     enableHighAccuracy: true,
-                    maximumAge: 5000,
-                    timeout: 10000
+                    timeout: 10000,
+                    maximumAge: 10000
                 }
 
             );
@@ -175,128 +240,17 @@ function DeliveryBoy() {
 
         };
 
-    }, []);
+    }, [userData]);
 
 
-    // ==================================================
-    // GET DELIVERY REQUESTS
-    // ==================================================
-
-    const getDeliveryRequests =
-        async () => {
-
-            try {
-
-                const token =
-                    localStorage.getItem(
-                        "token"
-                    );
-
-
-                const result =
-                    await axios.get(
-                        `${serverUrl}/api/order/delivery-requests`,
-                        {
-                            withCredentials: true,
-
-                            headers: token
-                                ? {
-                                    Authorization:
-                                        `Bearer ${token}`
-                                }
-                                : {}
-                        }
-                    );
-
-
-                /*
-                 * Backend returns:
-                 *
-                 * {
-                 *   success: true,
-                 *   requests: [...]
-                 * }
-                 */
-
-                setAssignments(
-                    result.data.requests ||
-                    []
-                );
-
-
-                setError("");
-
-            } catch (error) {
-
-                console.log(
-                    "Get delivery requests error:",
-                    error.response?.data ||
-                    error.message
-                );
-
-
-                setError(
-                    error.response
-                        ?.data
-                        ?.message ||
-                    "Unable to get delivery requests"
-                );
-
-            } finally {
-
-                setLoading(false);
-
-            }
-
-        };
-
-
-    // ==================================================
-    // POLLING DELIVERY REQUESTS
-    // ==================================================
-
-    useEffect(() => {
-
-        getDeliveryRequests();
-
-
-        const interval =
-            setInterval(
-                () => {
-
-                    getDeliveryRequests();
-
-                },
-                5000
-            );
-
-
-        return () => {
-
-            clearInterval(
-                interval
-            );
-
-        };
-
-    }, []);
-
-
-    // ==================================================
+    // =====================================================
     // ACCEPT DELIVERY
-    // ==================================================
+    // =====================================================
 
-    const handleAcceptDelivery =
-        async (
-            assignmentId
-        ) => {
+    const acceptDelivery =
+        async (assignmentId) => {
 
             try {
-
-                setAcceptingId(
-                    assignmentId
-                );
-
 
                 const token =
                     localStorage.getItem(
@@ -306,22 +260,17 @@ function DeliveryBoy() {
 
                 const result =
                     await axios.put(
-
                         `${serverUrl}/api/order/accept-delivery/${assignmentId}`,
-
                         {},
 
                         {
                             withCredentials: true,
 
-                            headers: token
-                                ? {
-                                    Authorization:
-                                        `Bearer ${token}`
-                                }
-                                : {}
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`
+                            }
                         }
-
                     );
 
 
@@ -331,28 +280,18 @@ function DeliveryBoy() {
                 );
 
 
-                // Remove accepted request
-                setAssignments(
+                setDeliveryRequests(
                     (prev) =>
                         prev.filter(
-                            (item) =>
-                                String(
-                                    item._id
-                                ) !==
-                                String(
-                                    assignmentId
-                                )
+                            (request) =>
+                                request._id !==
+                                assignmentId
                         )
                 );
 
 
-                // Immediately fetch accepted order
                 await refetchOrders();
 
-
-                alert(
-                    "Delivery accepted successfully"
-                );
 
             } catch (error) {
 
@@ -362,18 +301,9 @@ function DeliveryBoy() {
                     error.message
                 );
 
-
                 alert(
-                    error.response
-                        ?.data
-                        ?.message ||
+                    error.response?.data?.message ||
                     "Unable to accept delivery"
-                );
-
-            } finally {
-
-                setAcceptingId(
-                    null
                 );
 
             }
@@ -381,23 +311,15 @@ function DeliveryBoy() {
         };
 
 
-    // ==================================================
-    // FIND SHOP ORDER
-    // ==================================================
+    // =====================================================
+    // GET ACTIVE SHOP ORDER
+    // =====================================================
 
     const getShopOrder =
-        (
-            order
-        ) => {
-
-            if (!order) {
-                return null;
-            }
-
+        (order) => {
 
             if (
-                !order.shopOrders ||
-                order.shopOrders.length === 0
+                !order?.shopOrders
             ) {
                 return null;
             }
@@ -407,12 +329,20 @@ function DeliveryBoy() {
                 (shopOrder) => {
 
                     const assignment =
-                        shopOrder.deliveryAssignment;
+                        shopOrder
+                            ?.deliveryAssignment;
+
+
+                    if (!assignment) {
+                        return false;
+                    }
+
 
                     return (
-                        assignment &&
                         assignment.status ===
-                        "assigned"
+                        "assigned" &&
+                        shopOrder.status ===
+                        "out for delivery"
                     );
 
                 }
@@ -421,97 +351,117 @@ function DeliveryBoy() {
         };
 
 
-    // ==================================================
-    // GET DELIVERY BOY ACTIVE ORDERS
-    // ==================================================
+    // =====================================================
+    // ACTIVE DELIVERIES
+    // =====================================================
 
     const activeDeliveries =
         orders
-            .map(
-                (order) => {
+            .map((order) => {
 
-                    const shopOrder =
-                        getShopOrder(
-                            order
-                        );
+                const shopOrder =
+                    getShopOrder(order);
 
 
-                    if (!shopOrder) {
-                        return null;
-                    }
-
-
-                    return {
-                        order,
-                        shopOrder
-                    };
-
+                if (!shopOrder) {
+                    return null;
                 }
-            )
-            .filter(
-                Boolean
-            );
 
 
-    // ==================================================
-    // GET CUSTOMER POSITION
-    // ==================================================
-
-    const getCustomerPosition =
-        (
-            order
-        ) => {
-
-            const latitude =
-                Number(
-                    order
-                        ?.deliveryAddress
-                        ?.latitude
-                );
-
-            const longitude =
-                Number(
-                    order
-                        ?.deliveryAddress
-                        ?.longitude
-                );
+                const customerLatitude =
+                    Number(
+                        order
+                            ?.deliveryAddress
+                            ?.latitude
+                    );
 
 
-            if (
-                !Number.isFinite(
-                    latitude
-                ) ||
-                !Number.isFinite(
-                    longitude
-                )
-            ) {
-
-                return null;
-
-            }
+                const customerLongitude =
+                    Number(
+                        order
+                            ?.deliveryAddress
+                            ?.longitude
+                    );
 
 
-            return [
-                latitude,
-                longitude
-            ];
+                const validCustomerPosition =
+                    Number.isFinite(
+                        customerLatitude
+                    ) &&
+                    Number.isFinite(
+                        customerLongitude
+                    );
 
-        };
+
+                return {
+
+                    order,
+
+                    shopOrder,
+
+                    customerPosition:
+                        validCustomerPosition
+                            ? [
+                                customerLatitude,
+                                customerLongitude
+                            ]
+                            : null
+
+                };
+
+            })
+            .filter(Boolean);
 
 
-    // ==================================================
+    // =====================================================
+    // DEBUG ACTIVE DELIVERIES
+    // =====================================================
+
+    useEffect(() => {
+
+        console.log(
+            "========== ACTIVE DELIVERIES =========="
+        );
+
+        console.log(
+            "ACTIVE DELIVERIES:",
+            activeDeliveries
+        );
+
+        console.log(
+            "DELIVERY BOY POSITION:",
+            deliveryBoyPosition
+        );
+
+        console.log(
+            "========================================"
+        );
+
+    }, [
+        orders,
+        deliveryBoyPosition
+    ]);
+
+
+    // =====================================================
     // MARK DELIVERY
-    // ==================================================
+    // =====================================================
 
-    const handleMarkDelivery =
+    const markDelivery =
         async (
-            assignmentId
+            assignmentId,
+            orderId,
+            shopOrderId
         ) => {
 
             try {
 
-                setMarkingDeliveryId(
-                    assignmentId
+                setMarkingDelivery(
+                    (prev) => ({
+                        ...prev,
+                        [assignmentId]:
+                            true
+                    })
                 );
 
 
@@ -523,41 +473,36 @@ function DeliveryBoy() {
 
                 const result =
                     await axios.put(
-
                         `${serverUrl}/api/order/mark-delivery/${assignmentId}`,
-
                         {},
 
                         {
                             withCredentials: true,
 
-                            headers: token
-                                ? {
-                                    Authorization:
-                                        `Bearer ${token}`
-                                }
-                                : {}
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`
+                            }
                         }
-
                     );
 
 
                 console.log(
-                    "Mark delivery response:",
+                    "Mark delivery result:",
                     result.data
                 );
 
 
                 if (
-                    result.data
-                        ?.otpGenerated
+                    result.data?.otpGenerated
                 ) {
 
-                    setOtpGenerated(
+                    setOtpInputs(
                         (prev) => ({
                             ...prev,
+
                             [assignmentId]:
-                                true
+                                ""
                         })
                     );
 
@@ -567,10 +512,6 @@ function DeliveryBoy() {
                 await refetchOrders();
 
 
-                alert(
-                    "Delivery OTP generated. Ask the customer for the OTP."
-                );
-
             } catch (error) {
 
                 console.log(
@@ -579,18 +520,19 @@ function DeliveryBoy() {
                     error.message
                 );
 
-
                 alert(
-                    error.response
-                        ?.data
-                        ?.message ||
-                    "Unable to generate delivery OTP"
+                    error.response?.data?.message ||
+                    "Unable to mark delivery"
                 );
 
             } finally {
 
-                setMarkingDeliveryId(
-                    null
+                setMarkingDelivery(
+                    (prev) => ({
+                        ...prev,
+                        [assignmentId]:
+                            false
+                    })
                 );
 
             }
@@ -598,38 +540,40 @@ function DeliveryBoy() {
         };
 
 
-    // ==================================================
-    // VERIFY OTP
-    // ==================================================
+    // =====================================================
+    // VERIFY DELIVERY OTP
+    // =====================================================
 
-    const handleVerifyOtp =
-        async (
-            assignmentId
-        ) => {
-
-            const otp =
-                otpValues[
-                    assignmentId
-                ] || "";
-
-
-            if (
-                otp.length !== 6
-            ) {
-
-                alert(
-                    "Please enter the 6 digit OTP."
-                );
-
-                return;
-
-            }
-
+    const verifyDeliveryOtp =
+        async (assignmentId) => {
 
             try {
 
-                setVerifyingOtpId(
-                    assignmentId
+                const otp =
+                    otpInputs[
+                        assignmentId
+                    ] || "";
+
+
+                if (
+                    otp.length !== 6
+                ) {
+
+                    alert(
+                        "Please enter the 6 digit OTP"
+                    );
+
+                    return;
+
+                }
+
+
+                setVerifyingOtp(
+                    (prev) => ({
+                        ...prev,
+                        [assignmentId]:
+                            true
+                    })
                 );
 
 
@@ -641,7 +585,6 @@ function DeliveryBoy() {
 
                 const result =
                     await axios.put(
-
                         `${serverUrl}/api/order/verify-delivery-otp/${assignmentId}`,
 
                         {
@@ -651,46 +594,26 @@ function DeliveryBoy() {
                         {
                             withCredentials: true,
 
-                            headers: token
-                                ? {
-                                    Authorization:
-                                        `Bearer ${token}`
-                                }
-                                : {}
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`
+                            }
                         }
-
                     );
 
 
                 console.log(
-                    "OTP verification:",
+                    "Verify delivery OTP:",
                     result.data
                 );
 
 
                 alert(
-                    "OTP verified. Order delivered successfully."
+                    "Delivery completed successfully"
                 );
 
 
-                setOtpValues(
-                    (prev) => {
-
-                        const updated = {
-                            ...prev
-                        };
-
-                        delete updated[
-                            assignmentId
-                        ];
-
-                        return updated;
-
-                    }
-                );
-
-
-                setOtpGenerated(
+                setOtpInputs(
                     (prev) => {
 
                         const updated = {
@@ -718,18 +641,19 @@ function DeliveryBoy() {
                     error.message
                 );
 
-
                 alert(
-                    error.response
-                        ?.data
-                        ?.message ||
+                    error.response?.data?.message ||
                     "Invalid OTP"
                 );
 
             } finally {
 
-                setVerifyingOtpId(
-                    null
+                setVerifyingOtp(
+                    (prev) => ({
+                        ...prev,
+                        [assignmentId]:
+                            false
+                    })
                 );
 
             }
@@ -737,71 +661,42 @@ function DeliveryBoy() {
         };
 
 
-    // ==================================================
+    // =====================================================
     // LOADING
-    // ==================================================
+    // =====================================================
 
-    if (
-        loading &&
-        ordersLoading
-    ) {
+    if (loading) {
 
         return (
-
             <div
                 className="
                     min-h-screen
                     flex
                     items-center
                     justify-center
-                    bg-gray-100
                 "
             >
 
-                <div
-                    className="
-                        text-center
-                    "
-                >
-
-                    <div
-                        className="
-                            text-5xl
-                            mb-4
-                        "
-                    >
-                        🚴
-                    </div>
-
-
-                    <p
-                        className="
-                            text-gray-600
-                            text-lg
-                        "
-                    >
-                        Checking delivery requests...
-                    </p>
-
-                </div>
+                <p className="text-gray-500">
+                    Loading deliveries...
+                </p>
 
             </div>
-
         );
 
     }
 
 
-    // ==================================================
+    // =====================================================
     // UI
-    // ==================================================
+    // =====================================================
 
     return (
 
         <div
             className="
                 min-h-screen
-                bg-gray-100
+                bg-gray-50
                 px-4
                 py-6
             "
@@ -814,176 +709,78 @@ function DeliveryBoy() {
                 "
             >
 
-
-                {/* ======================================
-                    HEADER
-                ====================================== */}
-
-                <div
+                <h1
                     className="
+                        text-2xl
+                        font-bold
+                        text-gray-800
                         mb-6
                     "
                 >
-
-                    <h1
-                        className="
-                            text-3xl
-                            font-bold
-                            text-gray-800
-                        "
-                    >
-                        Delivery Dashboard
-                    </h1>
+                    Delivery Dashboard
+                </h1>
 
 
-                    <p
-                        className="
-                            text-gray-500
-                            mt-1
-                        "
-                    >
-                        Manage your delivery requests
-                        and active deliveries.
-                    </p>
+                {/* =================================================
+                    DELIVERY REQUESTS
+                ================================================= */}
 
-                </div>
+                {deliveryRequests.length >
+                    0 && (
 
-
-                {/* ======================================
-                    LOCATION ERROR
-                ====================================== */}
-
-                {locationError && (
-
-                    <div
-                        className="
-                            bg-yellow-50
-                            border
-                            border-yellow-200
-                            text-yellow-700
-                            rounded-xl
-                            p-4
-                            mb-5
-                        "
-                    >
-
-                        📍 {locationError}
-
-                    </div>
-
-                )}
-
-
-                {/* ======================================
-                    ERROR
-                ====================================== */}
-
-                {error && (
-
-                    <div
-                        className="
-                            bg-red-50
-                            border
-                            border-red-200
-                            text-red-600
-                            rounded-xl
-                            p-4
-                            mb-5
-                        "
-                    >
-
-                        {error}
-
-                    </div>
-
-                )}
-
-
-                {/* ======================================
-                    ACTIVE DELIVERIES
-                ====================================== */}
-
-                {activeDeliveries.length > 0 && (
-
-                    <div
-                        className="
-                            mb-8
-                        "
-                    >
+                    <div className="mb-8">
 
                         <h2
                             className="
-                                text-2xl
-                                font-bold
-                                text-gray-800
+                                text-xl
+                                font-semibold
                                 mb-4
                             "
                         >
-                            Active Delivery
+                            New Delivery Requests
                         </h2>
 
 
                         <div
                             className="
-                                space-y-6
+                                grid
+                                gap-4
                             "
                         >
 
-                            {activeDeliveries.map(
-                                ({
-                                    order,
-                                    shopOrder
-                                }) => {
+                            {deliveryRequests.map(
+                                (request) => {
 
-                                    const assignment =
-                                        shopOrder
-                                            ?.deliveryAssignment;
+                                    const order =
+                                        request?.order;
 
 
-                                    const assignmentId =
-                                        assignment?._id;
-
-
-                                    const customerPosition =
-                                        getCustomerPosition(
-                                            order
-                                        );
-
-
-                                    const otpIsGenerated =
-                                        Boolean(
-                                            otpGenerated[
-                                                assignmentId
-                                            ] ||
-                                            shopOrder
-                                                ?.deliveryOtpGenerated
-                                        );
+                                    const shopOrder =
+                                        request?.shopOrder;
 
 
                                     return (
 
                                         <div
                                             key={
-                                                assignmentId ||
-                                                order._id
+                                                request._id
                                             }
+
                                             className="
                                                 bg-white
-                                                rounded-2xl
+                                                rounded-xl
                                                 shadow-sm
+                                                border
                                                 p-5
                                             "
                                         >
 
-
-                                            {/* SHOP */}
-
                                             <div
                                                 className="
                                                     flex
-                                                    items-start
+                                                    items-center
                                                     justify-between
-                                                    gap-4
+                                                    mb-4
                                                 "
                                             >
 
@@ -991,665 +788,68 @@ function DeliveryBoy() {
 
                                                     <h3
                                                         className="
-                                                            text-xl
-                                                            font-bold
+                                                            font-semibold
                                                             text-gray-800
                                                         "
                                                     >
-                                                        {
-                                                            shopOrder
-                                                                ?.shop
-                                                                ?.name ||
-                                                            "Restaurant"
-                                                        }
+                                                        {shopOrder
+                                                            ?.shop
+                                                            ?.name ||
+                                                            "Restaurant"}
                                                     </h3>
 
-
                                                     <p
                                                         className="
                                                             text-sm
                                                             text-gray-500
-                                                            mt-1
                                                         "
                                                     >
-                                                        {
-                                                            shopOrder
-                                                                ?.shop
-                                                                ?.address ||
-                                                            "Restaurant address unavailable"
-                                                        }
-                                                    </p>
-
-                                                </div>
-
-
-                                                <span
-                                                    className="
-                                                        px-3
-                                                        py-1
-                                                        rounded-full
-                                                        bg-orange-100
-                                                        text-orange-600
-                                                        text-sm
-                                                        font-medium
-                                                    "
-                                                >
-                                                    Out for Delivery
-                                                </span>
-
-                                            </div>
-
-
-                                            {/* CUSTOMER */}
-
-                                            <div
-                                                className="
-                                                    border-t
-                                                    mt-5
-                                                    pt-4
-                                                "
-                                            >
-
-                                                <h4
-                                                    className="
-                                                        font-semibold
-                                                        text-gray-800
-                                                        mb-2
-                                                    "
-                                                >
-                                                    Customer
-                                                </h4>
-
-
-                                                <p
-                                                    className="
-                                                        text-gray-700
-                                                    "
-                                                >
-                                                    {
-                                                        order
-                                                            ?.user
-                                                            ?.fullName ||
-                                                        "Customer"
-                                                    }
-                                                </p>
-
-
-                                                <p
-                                                    className="
-                                                        text-sm
-                                                        text-gray-500
-                                                        mt-1
-                                                    "
-                                                >
-                                                    {
-                                                        order
+                                                        {order
                                                             ?.deliveryAddress
-                                                            ?.text ||
-                                                        "Address unavailable"
-                                                    }
-                                                </p>
-
-                                            </div>
-
-
-                                            {/* MAP */}
-
-                                            {customerPosition &&
-                                            deliveryBoyPosition ? (
-
-                                                <DeliveryTrackingMap
-                                                    customerPosition={
-                                                        customerPosition
-                                                    }
-                                                    deliveryBoyPosition={
-                                                        deliveryBoyPosition
-                                                    }
-                                                />
-
-                                            ) : (
-
-                                                <div
-                                                    className="
-                                                        mt-4
-                                                        bg-gray-50
-                                                        rounded-xl
-                                                        p-5
-                                                        text-center
-                                                    "
-                                                >
-
-                                                    <p
-                                                        className="
-                                                            text-gray-600
-                                                            font-medium
-                                                        "
-                                                    >
-                                                        📍 Waiting for location...
-                                                    </p>
-
-
-                                                    <p
-                                                        className="
-                                                            text-sm
-                                                            text-gray-400
-                                                            mt-1
-                                                        "
-                                                    >
-                                                        Allow location access
-                                                        to see live tracking.
+                                                            ?.address ||
+                                                            "Customer location"}
                                                     </p>
 
                                                 </div>
 
-                                            )}
-
-
-                                            {/* ITEMS */}
-
-                                            <div
-                                                className="
-                                                    border-t
-                                                    mt-5
-                                                    pt-4
-                                                "
-                                            >
-
-                                                <h4
-                                                    className="
-                                                        font-semibold
-                                                        text-gray-800
-                                                        mb-3
-                                                    "
-                                                >
-                                                    Order Items
-                                                </h4>
-
-
-                                                {shopOrder
-                                                    ?.shopOrderItems
-                                                    ?.length > 0 ? (
-
-                                                    <div
-                                                        className="
-                                                            space-y-2
-                                                        "
-                                                    >
-
-                                                        {shopOrder
-                                                            .shopOrderItems
-                                                            .map(
-                                                                (
-                                                                    orderItem
-                                                                ) => (
-
-                                                                    <div
-                                                                        key={
-                                                                            orderItem._id
-                                                                        }
-                                                                        className="
-                                                                            flex
-                                                                            justify-between
-                                                                            gap-4
-                                                                            text-sm
-                                                                        "
-                                                                    >
-
-                                                                        <span
-                                                                            className="
-                                                                                text-gray-600
-                                                                            "
-                                                                        >
-
-                                                                            {
-                                                                                orderItem
-                                                                                    .item
-                                                                                    ?.name ||
-                                                                                "Item"
-                                                                            }
-
-                                                                            {" × "}
-
-                                                                            {
-                                                                                orderItem.quantity
-                                                                            }
-
-                                                                        </span>
-
-
-                                                                        <span
-                                                                            className="
-                                                                                font-medium
-                                                                                text-gray-800
-                                                                            "
-                                                                        >
-
-                                                                            ₹
-                                                                            {(
-                                                                                Number(
-                                                                                    orderItem.price
-                                                                                ) *
-                                                                                Number(
-                                                                                    orderItem.quantity
-                                                                                )
-                                                                            ).toFixed(
-                                                                                2
-                                                                            )}
-
-                                                                        </span>
-
-                                                                    </div>
-
-                                                                )
-                                                            )}
-
-                                                    </div>
-
-                                                ) : (
-
-                                                    <p
-                                                        className="
-                                                            text-gray-500
-                                                            text-sm
-                                                        "
-                                                    >
-                                                        No items found
-                                                    </p>
-
-                                                )}
-
-                                            </div>
-
-
-                                            {/* TOTAL */}
-
-                                            <div
-                                                className="
-                                                    border-t
-                                                    mt-5
-                                                    pt-4
-                                                    flex
-                                                    justify-between
-                                                    items-center
-                                                "
-                                            >
 
                                                 <span
                                                     className="
+                                                        text-sm
                                                         font-semibold
-                                                        text-gray-700
-                                                    "
-                                                >
-                                                    Order Total
-                                                </span>
-
-
-                                                <span
-                                                    className="
-                                                        text-xl
-                                                        font-bold
                                                         text-orange-500
                                                     "
                                                 >
-
-                                                    ₹
-                                                    {Number(
-                                                        shopOrder
-                                                            ?.subtotal ||
-                                                        0
-                                                    ).toFixed(
-                                                        2
-                                                    )}
-
+                                                    {
+                                                        request.distance
+                                                    }{" "}
+                                                    m
                                                 </span>
 
                                             </div>
 
 
-                                            {/* ==================================
-                                                DELIVERY ACTION
-                                            ================================== */}
+                                            <button
+                                                onClick={() =>
+                                                    acceptDelivery(
+                                                        request._id
+                                                    )
+                                                }
 
-                                            {customerPosition &&
-                                            deliveryBoyPosition ? (
+                                                className="
+                                                    w-full
+                                                    bg-[#ff4d2d]
+                                                    text-white
+                                                    py-3
+                                                    rounded-lg
+                                                    font-semibold
+                                                    hover:opacity-90
+                                                "
+                                            >
 
-                                                <div
-                                                    className="
-                                                        mt-5
-                                                    "
-                                                >
+                                                Accept Delivery
 
-                                                    {/* DISTANCE */}
-
-                                                    <div
-                                                        className="
-                                                            bg-gray-50
-                                                            rounded-xl
-                                                            p-4
-                                                            text-center
-                                                            mb-4
-                                                        "
-                                                    >
-
-                                                        <p
-                                                            className="
-                                                                text-sm
-                                                                text-gray-500
-                                                            "
-                                                        >
-                                                            Current distance
-                                                        </p>
-
-
-                                                        <p
-                                                            className="
-                                                                text-2xl
-                                                                font-bold
-                                                                text-gray-800
-                                                                mt-1
-                                                            "
-                                                        >
-
-                                                            {
-                                                                (() => {
-
-                                                                    const R =
-                                                                        6371000;
-
-
-                                                                    const lat1 =
-                                                                        customerPosition[
-                                                                            0
-                                                                        ] *
-                                                                        Math.PI /
-                                                                        180;
-
-
-                                                                    const lat2 =
-                                                                        deliveryBoyPosition[
-                                                                            0
-                                                                        ] *
-                                                                        Math.PI /
-                                                                        180;
-
-
-                                                                    const dLat =
-                                                                        (
-                                                                            deliveryBoyPosition[
-                                                                                0
-                                                                            ] -
-                                                                            customerPosition[
-                                                                                0
-                                                                            ]
-                                                                        ) *
-                                                                        Math.PI /
-                                                                        180;
-
-
-                                                                    const dLon =
-                                                                        (
-                                                                            deliveryBoyPosition[
-                                                                                1
-                                                                            ] -
-                                                                            customerPosition[
-                                                                                1
-                                                                            ]
-                                                                        ) *
-                                                                        Math.PI /
-                                                                        180;
-
-
-                                                                    const a =
-                                                                        Math.sin(
-                                                                            dLat /
-                                                                            2
-                                                                        ) *
-                                                                        Math.sin(
-                                                                            dLat /
-                                                                            2
-                                                                        ) +
-
-                                                                        Math.cos(
-                                                                            lat1
-                                                                        ) *
-                                                                        Math.cos(
-                                                                            lat2
-                                                                        ) *
-
-                                                                        Math.sin(
-                                                                            dLon /
-                                                                            2
-                                                                        ) *
-                                                                        Math.sin(
-                                                                            dLon /
-                                                                            2
-                                                                        );
-
-
-                                                                    const c =
-                                                                        2 *
-                                                                        Math.atan2(
-                                                                            Math.sqrt(
-                                                                                a
-                                                                            ),
-                                                                            Math.sqrt(
-                                                                                1 -
-                                                                                a
-                                                                            )
-                                                                        );
-
-
-                                                                    const distance =
-                                                                        R *
-                                                                        c;
-
-
-                                                                    return distance >=
-                                                                        1000
-                                                                        ? `${(
-                                                                            distance /
-                                                                            1000
-                                                                        ).toFixed(
-                                                                            2
-                                                                        )} KM`
-                                                                        : `${Math.round(
-                                                                            distance
-                                                                        )} meters`;
-
-                                                                })()
-                                                            }
-
-                                                        </p>
-
-                                                    </div>
-
-
-                                                    {/* MARK DELIVERY */}
-
-                                                    {!otpIsGenerated && (
-
-                                                        <button
-                                                            onClick={() =>
-                                                                handleMarkDelivery(
-                                                                    assignmentId
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                markingDeliveryId ===
-                                                                assignmentId
-                                                            }
-                                                            className="
-                                                                w-full
-                                                                bg-green-500
-                                                                hover:bg-green-600
-                                                                disabled:bg-gray-400
-                                                                text-white
-                                                                py-3
-                                                                rounded-xl
-                                                                font-semibold
-                                                                transition
-                                                            "
-                                                        >
-
-                                                            {markingDeliveryId ===
-                                                            assignmentId
-                                                                ? "Generating OTP..."
-                                                                : "Mark as Delivered"}
-
-                                                        </button>
-
-                                                    )}
-
-
-                                                    {/* OTP */}
-
-                                                    {otpIsGenerated && (
-
-                                                        <div
-                                                            className="
-                                                                mt-4
-                                                                border
-                                                                border-green-200
-                                                                bg-green-50
-                                                                rounded-xl
-                                                                p-4
-                                                            "
-                                                        >
-
-                                                            <p
-                                                                className="
-                                                                    font-semibold
-                                                                    text-green-700
-                                                                "
-                                                            >
-                                                                🔐 Delivery OTP
-                                                            </p>
-
-
-                                                            <p
-                                                                className="
-                                                                    text-sm
-                                                                    text-gray-600
-                                                                    mt-1
-                                                                "
-                                                            >
-                                                                Ask the customer
-                                                                for the 6-digit
-                                                                OTP.
-                                                            </p>
-
-
-                                                            <input
-                                                                type="text"
-                                                                inputMode="numeric"
-                                                                maxLength={6}
-                                                                value={
-                                                                    otpValues[
-                                                                        assignmentId
-                                                                    ] ||
-                                                                    ""
-                                                                }
-                                                                onChange={(
-                                                                    e
-                                                                ) => {
-
-                                                                    const value =
-                                                                        e.target.value
-                                                                            .replace(
-                                                                                /\D/g,
-                                                                                ""
-                                                                            )
-                                                                            .slice(
-                                                                                0,
-                                                                                6
-                                                                            );
-
-
-                                                                    setOtpValues(
-                                                                        (
-                                                                            prev
-                                                                        ) => ({
-                                                                            ...prev,
-                                                                            [assignmentId]:
-                                                                                value
-                                                                        })
-                                                                    );
-
-                                                                }}
-                                                                placeholder="Enter 6 digit OTP"
-                                                                className="
-                                                                    w-full
-                                                                    mt-3
-                                                                    px-4
-                                                                    py-3
-                                                                    border
-                                                                    border-gray-300
-                                                                    rounded-xl
-                                                                    text-center
-                                                                    text-xl
-                                                                    tracking-[0.4em]
-                                                                    outline-none
-                                                                    focus:ring-2
-                                                                    focus:ring-green-400
-                                                                "
-                                                            />
-
-
-                                                            <button
-                                                                onClick={() =>
-                                                                    handleVerifyOtp(
-                                                                        assignmentId
-                                                                    )
-                                                                }
-                                                                disabled={
-                                                                    verifyingOtpId ===
-                                                                    assignmentId
-                                                                }
-                                                                className="
-                                                                    w-full
-                                                                    mt-3
-                                                                    bg-green-600
-                                                                    hover:bg-green-700
-                                                                    disabled:bg-gray-400
-                                                                    text-white
-                                                                    py-3
-                                                                    rounded-xl
-                                                                    font-semibold
-                                                                "
-                                                            >
-
-                                                                {verifyingOtpId ===
-                                                                assignmentId
-                                                                    ? "Verifying..."
-                                                                    : "Verify OTP & Complete Delivery"}
-
-                                                            </button>
-
-                                                        </div>
-
-                                                    )}
-
-                                                </div>
-
-                                            ) : (
-
-                                                <div
-                                                    className="
-                                                        mt-5
-                                                        bg-yellow-50
-                                                        border
-                                                        border-yellow-200
-                                                        rounded-xl
-                                                        p-4
-                                                        text-center
-                                                        text-yellow-700
-                                                    "
-                                                >
-                                                    Waiting for both locations
-                                                    before delivery verification.
-                                                </div>
-
-                                            )}
+                                            </button>
 
                                         </div>
 
@@ -1665,78 +865,51 @@ function DeliveryBoy() {
                 )}
 
 
-                {/* ======================================
-                    DELIVERY REQUESTS
-                ====================================== */}
+                {/* =================================================
+                    ACTIVE DELIVERIES
+                ================================================= */}
 
                 <div>
 
                     <h2
                         className="
-                            text-2xl
-                            font-bold
-                            text-gray-800
+                            text-xl
+                            font-semibold
                             mb-4
                         "
                     >
-                        Delivery Requests
+                        Active Deliveries
                     </h2>
 
 
-                    {assignments.length === 0 ? (
+                    {activeDeliveries.length ===
+                        0 ? (
 
                         <div
                             className="
                                 bg-white
-                                rounded-2xl
-                                shadow-sm
-                                p-10
+                                border
+                                rounded-xl
+                                p-8
                                 text-center
                             "
                         >
 
-                            <div
+                            <FaTruck
                                 className="
-                                    text-6xl
-                                    mb-4
+                                    mx-auto
+                                    text-gray-400
+                                    text-3xl
+                                    mb-3
                                 "
-                            >
-                                🚴
-                            </div>
-
-
-                            <h3
-                                className="
-                                    text-xl
-                                    font-semibold
-                                    text-gray-700
-                                "
-                            >
-                                No delivery requests
-                            </h3>
-
+                            />
 
                             <p
                                 className="
                                     text-gray-500
-                                    mt-2
                                 "
                             >
-                                You will see a delivery request
-                                here when an order is available
-                                within 5 KM.
-                            </p>
-
-
-                            <p
-                                className="
-                                    text-sm
-                                    text-gray-400
-                                    mt-3
-                                "
-                            >
-                                This page checks for new requests
-                                automatically.
+                                No active deliveries
                             </p>
 
                         </div>
@@ -1745,392 +918,412 @@ function DeliveryBoy() {
 
                         <div
                             className="
-                                space-y-5
+                                space-y-6
                             "
                         >
 
-                            {assignments.map(
-                                (
-                                    assignment
-                                ) => {
+                            {activeDeliveries.map(
+                                ({
+                                    order,
+                                    shopOrder,
+                                    customerPosition
+                                }) => {
 
-                                    const order =
-                                        assignment.order;
+                                    const assignment =
+                                        shopOrder
+                                            ?.deliveryAssignment;
 
-                                    const shop =
-                                        assignment.shop;
 
-                                    const shopOrder =
-                                        assignment.shopOrder ||
-                                        order
-                                            ?.shopOrders
-                                            ?.find(
-                                                (
-                                                    item
-                                                ) =>
-                                                    String(
-                                                        item._id
-                                                    ) ===
-                                                    String(
-                                                        assignment.shopOrderId
-                                                    )
-                                            );
+                                    const assignmentId =
+                                        assignment?._id;
 
 
                                     return (
 
                                         <div
                                             key={
-                                                assignment._id
+                                                assignmentId ||
+                                                shopOrder?._id
                                             }
+
                                             className="
                                                 bg-white
-                                                rounded-2xl
+                                                rounded-xl
+                                                border
                                                 shadow-sm
-                                                p-5
+                                                overflow-hidden
                                             "
                                         >
 
-                                            {/* SHOP */}
+                                            {/* ==========================
+                                                HEADER
+                                            ========================== */}
 
                                             <div
                                                 className="
+                                                    px-5
+                                                    py-4
+                                                    border-b
                                                     flex
-                                                    items-start
+                                                    items-center
                                                     justify-between
-                                                    gap-4
                                                 "
                                             >
 
                                                 <div>
 
-                                                    <h2
+                                                    <h3
                                                         className="
-                                                            text-xl
-                                                            font-bold
+                                                            font-semibold
                                                             text-gray-800
                                                         "
                                                     >
-                                                        {
-                                                            shop?.name ||
-                                                            "Restaurant"
-                                                        }
-                                                    </h2>
-
+                                                        Delivery
+                                                    </h3>
 
                                                     <p
                                                         className="
                                                             text-sm
                                                             text-gray-500
-                                                            mt-1
                                                         "
                                                     >
-                                                        {
-                                                            shop?.address ||
-                                                            "Restaurant address unavailable"
-                                                        }
+                                                        Order #
+                                                        {order?._id
+                                                            ?.slice(
+                                                                -6
+                                                            )}
                                                     </p>
 
                                                 </div>
 
+
+                                                <span
+                                                    className="
+                                                        px-3
+                                                        py-1
+                                                        rounded-full
+                                                        bg-orange-100
+                                                        text-orange-600
+                                                        text-sm
+                                                        font-semibold
+                                                    "
+                                                >
+                                                    Out for Delivery
+                                                </span>
+
+                                            </div>
+
+
+                                            {/* ==========================
+                                                CUSTOMER
+                                            ========================== */}
+
+                                            <div
+                                                className="
+                                                    px-5
+                                                    py-4
+                                                "
+                                            >
 
                                                 <div
                                                     className="
-                                                        text-right
+                                                        flex
+                                                        items-start
+                                                        gap-3
                                                     "
                                                 >
 
-                                                    <span
+                                                    <FaLocationDot
                                                         className="
-                                                            inline-block
-                                                            px-3
-                                                            py-1
-                                                            rounded-full
-                                                            bg-orange-100
-                                                            text-orange-600
-                                                            text-sm
-                                                            font-medium
+                                                            text-[#ff4d2d]
+                                                            mt-1
                                                         "
-                                                    >
-                                                        New Delivery
-                                                    </span>
+                                                    />
 
+                                                    <div>
 
-                                                    <p
-                                                        className="
-                                                            text-sm
-                                                            text-gray-500
-                                                            mt-2
-                                                        "
-                                                    >
+                                                        <p
+                                                            className="
+                                                                font-semibold
+                                                                text-gray-800
+                                                            "
+                                                        >
+                                                            Customer
+                                                        </p>
 
-                                                        {assignment.distance
-                                                            ? (
-                                                                assignment.distance >=
-                                                                1000
-                                                                    ? `${(
-                                                                        assignment.distance /
-                                                                        1000
-                                                                    ).toFixed(
-                                                                        1
-                                                                    )} KM`
-                                                                    : `${assignment.distance} m`
-                                                            )
-                                                            : "Within 5 KM"}
-
-                                                    </p>
-
-                                                </div>
-
-                                            </div>
-
-
-                                            {/* CUSTOMER */}
-
-                                            <div
-                                                className="
-                                                    border-t
-                                                    mt-5
-                                                    pt-4
-                                                "
-                                            >
-
-                                                <h3
-                                                    className="
-                                                        font-semibold
-                                                        text-gray-800
-                                                        mb-2
-                                                    "
-                                                >
-                                                    Customer
-                                                </h3>
-
-
-                                                <p
-                                                    className="
-                                                        text-gray-700
-                                                    "
-                                                >
-                                                    {
-                                                        order
-                                                            ?.user
-                                                            ?.fullName ||
-                                                        "Customer"
-                                                    }
-                                                </p>
-
-
-                                                <p
-                                                    className="
-                                                        text-sm
-                                                        text-gray-500
-                                                        mt-1
-                                                    "
-                                                >
-                                                    {
-                                                        order
-                                                            ?.deliveryAddress
-                                                            ?.text ||
-                                                        "Address unavailable"
-                                                    }
-                                                </p>
-
-                                            </div>
-
-
-                                            {/* ITEMS */}
-
-                                            <div
-                                                className="
-                                                    border-t
-                                                    mt-5
-                                                    pt-4
-                                                "
-                                            >
-
-                                                <h3
-                                                    className="
-                                                        font-semibold
-                                                        text-gray-800
-                                                        mb-3
-                                                    "
-                                                >
-                                                    Order Items
-                                                </h3>
-
-
-                                                {shopOrder
-                                                    ?.shopOrderItems
-                                                    ?.length > 0 ? (
-
-                                                    <div
-                                                        className="
-                                                            space-y-2
-                                                        "
-                                                    >
-
-                                                        {shopOrder
-                                                            .shopOrderItems
-                                                            .map(
-                                                                (
-                                                                    orderItem
-                                                                ) => (
-
-                                                                    <div
-                                                                        key={
-                                                                            orderItem._id
-                                                                        }
-                                                                        className="
-                                                                            flex
-                                                                            justify-between
-                                                                            gap-4
-                                                                            text-sm
-                                                                        "
-                                                                    >
-
-                                                                        <span
-                                                                            className="
-                                                                                text-gray-600
-                                                                            "
-                                                                        >
-
-                                                                            {
-                                                                                orderItem
-                                                                                    .item
-                                                                                    ?.name ||
-                                                                                "Item"
-                                                                            }
-
-                                                                            {" × "}
-
-                                                                            {
-                                                                                orderItem.quantity
-                                                                            }
-
-                                                                        </span>
-
-
-                                                                        <span
-                                                                            className="
-                                                                                font-medium
-                                                                                text-gray-800
-                                                                            "
-                                                                        >
-
-                                                                            ₹
-                                                                            {(
-                                                                                Number(
-                                                                                    orderItem.price
-                                                                                ) *
-                                                                                Number(
-                                                                                    orderItem.quantity
-                                                                                )
-                                                                            ).toFixed(
-                                                                                2
-                                                                            )}
-
-                                                                        </span>
-
-                                                                    </div>
-
-                                                                )
-                                                            )}
+                                                        <p
+                                                            className="
+                                                                text-sm
+                                                                text-gray-600
+                                                            "
+                                                        >
+                                                            {
+                                                                order
+                                                                    ?.deliveryAddress
+                                                                    ?.address
+                                                            }
+                                                        </p>
 
                                                     </div>
 
-                                                ) : (
+                                                </div>
 
-                                                    <p
+
+                                                {order
+                                                    ?.user
+                                                    ?.mobile && (
+
+                                                    <div
                                                         className="
-                                                            text-gray-500
-                                                            text-sm
+                                                            flex
+                                                            items-center
+                                                            gap-3
+                                                            mt-3
                                                         "
                                                     >
-                                                        No items found
-                                                    </p>
+
+                                                        <FaPhone
+                                                            className="
+                                                                text-green-500
+                                                            "
+                                                        />
+
+                                                        <span>
+                                                            {
+                                                                order
+                                                                    ?.user
+                                                                    ?.mobile
+                                                            }
+                                                        </span>
+
+                                                    </div>
 
                                                 )}
 
                                             </div>
 
 
-                                            {/* TOTAL */}
+                                            {/* ==========================
+                                                TRACKING MAP
+                                            ========================== */}
+
+                                            {customerPosition &&
+                                                deliveryBoyPosition ? (
+
+                                                <DeliveryTrackingMap
+                                                    customerPosition={
+                                                        customerPosition
+                                                    }
+
+                                                    deliveryBoyPosition={
+                                                        deliveryBoyPosition
+                                                    }
+                                                />
+
+                                            ) : (
+
+                                                <div
+                                                    className="
+                                                        mx-5
+                                                        mb-5
+                                                        p-4
+                                                        rounded-lg
+                                                        bg-gray-50
+                                                        text-center
+                                                        text-sm
+                                                        text-gray-500
+                                                    "
+                                                >
+
+                                                    Waiting for location...
+
+                                                </div>
+
+                                            )}
+
+
+                                            {/* ==========================
+                                                MARK DELIVERY
+                                            ========================== */}
 
                                             <div
                                                 className="
-                                                    border-t
-                                                    mt-5
-                                                    pt-4
-                                                    flex
-                                                    justify-between
-                                                    items-center
+                                                    px-5
+                                                    pb-5
                                                 "
                                             >
 
-                                                <span
-                                                    className="
-                                                        font-semibold
-                                                        text-gray-700
-                                                    "
-                                                >
-                                                    Order Total
-                                                </span>
+                                                {!otpInputs[
+                                                    assignmentId
+                                                ] && (
+
+                                                    <button
+                                                        onClick={() =>
+                                                            markDelivery(
+                                                                assignmentId,
+                                                                order?._id,
+                                                                shopOrder?._id
+                                                            )
+                                                        }
+
+                                                        disabled={
+                                                            markingDelivery[
+                                                                assignmentId
+                                                            ]
+                                                        }
+
+                                                        className="
+                                                            w-full
+                                                            bg-[#ff4d2d]
+                                                            text-white
+                                                            py-3
+                                                            rounded-lg
+                                                            font-semibold
+                                                            disabled:opacity-50
+                                                        "
+                                                    >
+
+                                                        {markingDelivery[
+                                                            assignmentId
+                                                        ]
+                                                            ? "Checking location..."
+                                                            : "Mark as Delivered"}
+
+                                                    </button>
+
+                                                )}
 
 
-                                                <span
-                                                    className="
-                                                        text-xl
-                                                        font-bold
-                                                        text-orange-500
-                                                    "
-                                                >
+                                                {otpInputs[
+                                                    assignmentId
+                                                ] !==
+                                                    undefined && (
 
-                                                    ₹
-                                                    {Number(
-                                                        shopOrder
-                                                            ?.subtotal ||
-                                                        0
-                                                    ).toFixed(
-                                                        2
-                                                    )}
+                                                    <div
+                                                        className="
+                                                            mt-4
+                                                            p-4
+                                                            rounded-xl
+                                                            border
+                                                            bg-gray-50
+                                                        "
+                                                    >
 
-                                                </span>
+                                                        <p
+                                                            className="
+                                                                font-semibold
+                                                                text-gray-800
+                                                                mb-2
+                                                            "
+                                                        >
+                                                            Enter Customer OTP
+                                                        </p>
+
+
+                                                        <p
+                                                            className="
+                                                                text-sm
+                                                                text-gray-500
+                                                                mb-3
+                                                            "
+                                                        >
+                                                            Ask the customer for the
+                                                            6-digit delivery OTP.
+                                                        </p>
+
+
+                                                        <input
+                                                            type="text"
+
+                                                            inputMode="numeric"
+
+                                                            maxLength={6}
+
+                                                            value={
+                                                                otpInputs[
+                                                                    assignmentId
+                                                                ] ||
+                                                                ""
+                                                            }
+
+                                                            onChange={(event) => {
+
+                                                                const value =
+                                                                    event.target.value
+                                                                        .replace(
+                                                                            /\D/g,
+                                                                            ""
+                                                                        )
+                                                                        .slice(
+                                                                            0,
+                                                                            6
+                                                                        );
+
+
+                                                                setOtpInputs(
+                                                                    (prev) => ({
+                                                                        ...prev,
+
+                                                                        [assignmentId]:
+                                                                            value
+                                                                    })
+                                                                );
+
+                                                            }}
+
+                                                            placeholder="Enter 6 digit OTP"
+
+                                                            className="
+                                                                w-full
+                                                                border
+                                                                border-gray-300
+                                                                rounded-lg
+                                                                px-4
+                                                                py-3
+                                                                outline-none
+                                                                focus:border-[#ff4d2d]
+                                                            "
+                                                        />
+
+
+                                                        <button
+                                                            onClick={() =>
+                                                                verifyDeliveryOtp(
+                                                                    assignmentId
+                                                                )
+                                                            }
+
+                                                            disabled={
+                                                                verifyingOtp[
+                                                                    assignmentId
+                                                                ]
+                                                            }
+
+                                                            className="
+                                                                w-full
+                                                                mt-3
+                                                                bg-green-600
+                                                                text-white
+                                                                py-3
+                                                                rounded-lg
+                                                                font-semibold
+                                                                disabled:opacity-50
+                                                            "
+                                                        >
+
+                                                            {verifyingOtp[
+                                                                assignmentId
+                                                            ]
+                                                                ? "Verifying..."
+                                                                : "Verify OTP & Complete Delivery"}
+
+                                                        </button>
+
+                                                    </div>
+
+                                                )}
 
                                             </div>
-
-
-                                            {/* ACCEPT */}
-
-                                            <button
-                                                onClick={() =>
-                                                    handleAcceptDelivery(
-                                                        assignment._id
-                                                    )
-                                                }
-                                                disabled={
-                                                    acceptingId ===
-                                                    assignment._id
-                                                }
-                                                className="
-                                                    w-full
-                                                    mt-5
-                                                    bg-orange-500
-                                                    hover:bg-orange-600
-                                                    disabled:bg-gray-400
-                                                    text-white
-                                                    py-3
-                                                    rounded-xl
-                                                    font-semibold
-                                                    transition
-                                                "
-                                            >
-
-                                                {acceptingId ===
-                                                assignment._id
-                                                    ? "Accepting..."
-                                                    : "Accept Delivery"}
-
-                                            </button>
 
                                         </div>
 
@@ -2151,7 +1344,7 @@ function DeliveryBoy() {
 
     );
 
-}
+};
 
 
 export default DeliveryBoy;
