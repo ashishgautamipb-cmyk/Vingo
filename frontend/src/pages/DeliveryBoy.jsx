@@ -33,39 +33,73 @@ const calculateDistance = (
 ) => {
 
     if (
-        !position1 ||
-        !position2
+        !Array.isArray(position1) ||
+        !Array.isArray(position2)
     ) {
         return null;
     }
 
-    const earthRadius = 6371000;
+    if (
+        position1.length !== 2 ||
+        position2.length !== 2
+    ) {
+        return null;
+    }
 
     const latitude1 =
-        position1[0] *
+        Number(position1[0]);
+
+    const longitude1 =
+        Number(position1[1]);
+
+    const latitude2 =
+        Number(position2[0]);
+
+    const longitude2 =
+        Number(position2[1]);
+
+
+    if (
+        !Number.isFinite(latitude1) ||
+        !Number.isFinite(longitude1) ||
+        !Number.isFinite(latitude2) ||
+        !Number.isFinite(longitude2)
+    ) {
+        return null;
+    }
+
+
+    const earthRadius = 6371000;
+
+
+    const lat1 =
+        latitude1 *
         Math.PI /
         180;
 
-    const latitude2 =
-        position2[0] *
+    const lat2 =
+        latitude2 *
         Math.PI /
         180;
+
 
     const differenceLatitude =
         (
-            position2[0] -
-            position1[0]
+            latitude2 -
+            latitude1
         ) *
         Math.PI /
         180;
 
+
     const differenceLongitude =
         (
-            position2[1] -
-            position1[1]
+            longitude2 -
+            longitude1
         ) *
         Math.PI /
         180;
+
 
     const a =
         Math.sin(
@@ -75,8 +109,8 @@ const calculateDistance = (
             differenceLatitude / 2
         ) +
 
-        Math.cos(latitude1) *
-        Math.cos(latitude2) *
+        Math.cos(lat1) *
+        Math.cos(lat2) *
 
         Math.sin(
             differenceLongitude / 2
@@ -85,12 +119,14 @@ const calculateDistance = (
             differenceLongitude / 2
         );
 
+
     const c =
         2 *
         Math.atan2(
             Math.sqrt(a),
             Math.sqrt(1 - a)
         );
+
 
     return earthRadius * c;
 };
@@ -192,9 +228,11 @@ const DeliveryBoy = () => {
                             "token"
                         );
 
+
                     if (!token) {
                         return;
                     }
+
 
                     const result =
                         await axios.get(
@@ -208,6 +246,7 @@ const DeliveryBoy = () => {
                                 }
                             }
                         );
+
 
                     setDeliveryRequests(
                         result.data?.requests ||
@@ -249,6 +288,56 @@ const DeliveryBoy = () => {
 
 
     // =====================================================
+    // INITIAL LOCATION FROM REDUX
+    // =====================================================
+
+    useEffect(() => {
+
+        const coordinates =
+            userData
+                ?.location
+                ?.coordinates;
+
+
+        if (
+            Array.isArray(coordinates) &&
+            coordinates.length === 2
+        ) {
+
+            const longitude =
+                Number(coordinates[0]);
+
+            const latitude =
+                Number(coordinates[1]);
+
+
+            if (
+                Number.isFinite(latitude) &&
+                Number.isFinite(longitude)
+            ) {
+
+                console.log(
+                    "LOCATION FROM USER DATA:",
+                    {
+                        latitude,
+                        longitude
+                    }
+                );
+
+
+                setDeliveryBoyPosition([
+                    latitude,
+                    longitude
+                ]);
+
+            }
+
+        }
+
+    }, [userData]);
+
+
+    // =====================================================
     // LIVE DELIVERY BOY LOCATION
     // =====================================================
 
@@ -258,12 +347,14 @@ const DeliveryBoy = () => {
             return;
         }
 
+
         if (
             userData.role !==
             "deliveryBoy"
         ) {
             return;
         }
+
 
         if (
             !navigator.geolocation
@@ -277,39 +368,83 @@ const DeliveryBoy = () => {
         }
 
 
-        const watchId =
-            navigator.geolocation.watchPosition(
+        console.log(
+            "STARTING DELIVERY BOY GPS..."
+        );
 
-                (position) => {
 
-                    const latitude =
-                        position.coords.latitude;
+        const handleLocation =
+            (position) => {
 
-                    const longitude =
-                        position.coords.longitude;
-
-                    setDeliveryBoyPosition([
-                        latitude,
-                        longitude
-                    ]);
-
-                },
-
-                (error) => {
-
-                    console.log(
-                        "Delivery boy location error:",
-                        error.message
+                const latitude =
+                    Number(
+                        position.coords.latitude
                     );
 
-                },
+                const longitude =
+                    Number(
+                        position.coords.longitude
+                    );
 
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 10000
+
+                if (
+                    !Number.isFinite(latitude) ||
+                    !Number.isFinite(longitude)
+                ) {
+                    return;
                 }
 
+
+                const newPosition = [
+                    latitude,
+                    longitude
+                ];
+
+
+                console.log(
+                    "DELIVERY BOY GPS POSITION:",
+                    newPosition
+                );
+
+
+                setDeliveryBoyPosition(
+                    newPosition
+                );
+
+            };
+
+
+        const handleError =
+            (error) => {
+
+                console.log(
+                    "Delivery boy location error:",
+                    error.message
+                );
+
+            };
+
+
+        navigator.geolocation.getCurrentPosition(
+            handleLocation,
+            handleError,
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 5000
+            }
+        );
+
+
+        const watchId =
+            navigator.geolocation.watchPosition(
+                handleLocation,
+                handleError,
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 5000
+                }
             );
 
 
@@ -337,6 +472,7 @@ const DeliveryBoy = () => {
                     localStorage.getItem(
                         "token"
                     );
+
 
                 if (!token) {
 
@@ -389,6 +525,7 @@ const DeliveryBoy = () => {
                     error.response?.data ||
                     error.message
                 );
+
 
                 alert(
                     error.response?.data?.message ||
@@ -514,6 +651,19 @@ const DeliveryBoy = () => {
 
 
     // =====================================================
+    // CURRENT DELIVERY FOR MAP
+    // =====================================================
+
+    const currentDelivery =
+        activeDeliveries.find(
+            (delivery) =>
+                Array.isArray(
+                    delivery.customerPosition
+                )
+        ) || null;
+
+
+    // =====================================================
     // DEBUG
     // =====================================================
 
@@ -523,40 +673,34 @@ const DeliveryBoy = () => {
             "========== DELIVERY UI =========="
         );
 
+
         console.log(
             "ACTIVE DELIVERIES:",
             activeDeliveries
         );
+
 
         console.log(
             "DELIVERY BOY POSITION:",
             deliveryBoyPosition
         );
 
-        activeDeliveries.forEach(
-            (
-                delivery,
-                index
-            ) => {
 
-                console.log(
-                    `DELIVERY ${index + 1}:`,
-                    {
-                        orderId:
-                            delivery.order?._id,
-
-                        customerPosition:
-                            delivery.customerPosition,
-
-                        deliveryBoyPosition,
-
-                        distance:
-                            delivery.distance
-                    }
-                );
-
-            }
+        console.log(
+            "CURRENT MAP DELIVERY:",
+            currentDelivery
         );
+
+
+        if (currentDelivery) {
+
+            console.log(
+                "MAP CUSTOMER POSITION:",
+                currentDelivery.customerPosition
+            );
+
+        }
+
 
         console.log(
             "================================"
@@ -776,9 +920,11 @@ const DeliveryBoy = () => {
                             ...prev
                         };
 
+
                         delete updated[
                             assignmentId
                         ];
+
 
                         return updated;
 
@@ -793,9 +939,11 @@ const DeliveryBoy = () => {
                             ...prev
                         };
 
+
                         delete updated[
                             assignmentId
                         ];
+
 
                         return updated;
 
@@ -909,8 +1057,7 @@ const DeliveryBoy = () => {
                     NEW DELIVERY REQUESTS
                 ================================================= */}
 
-                {deliveryRequests.length >
-                    0 && (
+                {deliveryRequests.length > 0 && (
 
                     <div className="mb-8">
 
@@ -1065,8 +1212,131 @@ const DeliveryBoy = () => {
                     </h2>
 
 
-                    {activeDeliveries.length ===
-                        0 ? (
+                    {/* =================================================
+                        SINGLE TRACKING MAP
+                    ================================================= */}
+
+                    {currentDelivery &&
+                        currentDelivery.customerPosition &&
+                        deliveryBoyPosition ? (
+
+                        <div
+                            className="
+                                bg-white
+                                rounded-xl
+                                border
+                                shadow-sm
+                                overflow-hidden
+                                mb-6
+                            "
+                        >
+
+                            <div
+                                className="
+                                    px-5
+                                    py-4
+                                    border-b
+                                "
+                            >
+
+                                <h3
+                                    className="
+                                        font-semibold
+                                        text-gray-800
+                                    "
+                                >
+                                    Live Delivery Tracking
+                                </h3>
+
+
+                                <p
+                                    className="
+                                        text-sm
+                                        text-gray-500
+                                        mt-1
+                                    "
+                                >
+                                    Tracking your current active
+                                    delivery
+                                </p>
+
+                            </div>
+
+
+                            <div className="p-4">
+
+                                <DeliveryTrackingMap
+                                    customerPosition={
+                                        currentDelivery.customerPosition
+                                    }
+
+                                    deliveryBoyPosition={
+                                        deliveryBoyPosition
+                                    }
+                                />
+
+                            </div>
+
+                        </div>
+
+                    ) : (
+
+                        activeDeliveries.length > 0 && (
+
+                            <div
+                                className="
+                                    bg-white
+                                    border
+                                    rounded-xl
+                                    p-6
+                                    mb-6
+                                    text-center
+                                "
+                            >
+
+                                <FaLocationDot
+                                    className="
+                                        mx-auto
+                                        text-gray-400
+                                        text-3xl
+                                        mb-3
+                                    "
+                                />
+
+
+                                <p
+                                    className="
+                                        text-gray-600
+                                        font-medium
+                                    "
+                                >
+                                    Getting your live location...
+                                </p>
+
+
+                                <p
+                                    className="
+                                        text-sm
+                                        text-gray-400
+                                        mt-1
+                                    "
+                                >
+                                    Please allow location access
+                                    in your browser.
+                                </p>
+
+                            </div>
+
+                        )
+
+                    )}
+
+
+                    {/* =================================================
+                        NO ACTIVE DELIVERIES
+                    ================================================= */}
+
+                    {activeDeliveries.length === 0 ? (
 
                         <div
                             className="
@@ -1317,61 +1587,6 @@ const DeliveryBoy = () => {
 
 
                                             {/* =========================
-                                                MAP
-                                            ========================= */}
-
-                                            {customerPosition &&
-                                                deliveryBoyPosition ? (
-
-                                                <DeliveryTrackingMap
-                                                    customerPosition={
-                                                        customerPosition
-                                                    }
-
-                                                    deliveryBoyPosition={
-                                                        deliveryBoyPosition
-                                                    }
-                                                />
-
-                                            ) : (
-
-                                                <div
-                                                    className="
-                                                        mx-5
-                                                        mb-5
-                                                        p-5
-                                                        rounded-lg
-                                                        bg-gray-50
-                                                        text-center
-                                                    "
-                                                >
-
-                                                    <FaLocationDot
-                                                        className="
-                                                            mx-auto
-                                                            text-gray-400
-                                                            text-2xl
-                                                            mb-2
-                                                        "
-                                                    />
-
-
-                                                    <p
-                                                        className="
-                                                            text-sm
-                                                            text-gray-500
-                                                        "
-                                                    >
-                                                        Waiting for your
-                                                        live location...
-                                                    </p>
-
-                                                </div>
-
-                                            )}
-
-
-                                            {/* =========================
                                                 DISTANCE
                                             ========================= */}
 
@@ -1380,7 +1595,7 @@ const DeliveryBoy = () => {
                                                 <div
                                                     className={`
                                                         mx-5
-                                                        mt-4
+                                                        mb-5
                                                         p-4
                                                         rounded-xl
                                                         text-center
