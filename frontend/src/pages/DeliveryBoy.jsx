@@ -116,8 +116,10 @@ const calculateDistance = (
 // =====================================================
 // DELIVERY BOY
 // =====================================================
+console.log("🔥🔥🔥 DELIVERYBOY.JSX FILE LOADED 🔥🔥🔥");
 
 const DeliveryBoy = () => {
+    console.log("🔥🔥🔥 DELIVERY BOY PAGE LOADED 🔥🔥🔥");
 
     const {
         userData
