@@ -125,12 +125,25 @@ const calculateDistance = (
 
 const DeliveryBoy = () => {
 
+    console.log(
+        "🔥 DELIVERY BOY RENDER START"
+    );
+
+
+    // =====================================================
+    // USER
+    // =====================================================
+
     const {
         userData
     } = useSelector(
         (state) => state.user
     );
 
+
+    // =====================================================
+    // ORDERS
+    // =====================================================
 
     const {
         orders,
@@ -175,7 +188,7 @@ const DeliveryBoy = () => {
 
 
     // =====================================================
-    // DEBUG - COMPONENT MOUNT
+    // COMPONENT MOUNT DEBUG
     // =====================================================
 
     useEffect(() => {
@@ -276,7 +289,9 @@ const DeliveryBoy = () => {
 
 
         return () => {
+
             clearInterval(interval);
+
         };
 
     }, []);
@@ -304,7 +319,9 @@ const DeliveryBoy = () => {
             !Array.isArray(coordinates) ||
             coordinates.length !== 2
         ) {
+
             return;
+
         }
 
 
@@ -319,7 +336,9 @@ const DeliveryBoy = () => {
             !Number.isFinite(latitude) ||
             !Number.isFinite(longitude)
         ) {
+
             return;
+
         }
 
 
@@ -349,10 +368,13 @@ const DeliveryBoy = () => {
     useEffect(() => {
 
         if (!userData) {
+
             console.log(
                 "GPS: USER DATA NOT READY"
             );
+
             return;
+
         }
 
 
@@ -366,6 +388,7 @@ const DeliveryBoy = () => {
             );
 
             return;
+
         }
 
 
@@ -378,6 +401,7 @@ const DeliveryBoy = () => {
             );
 
             return;
+
         }
 
 
@@ -410,6 +434,7 @@ const DeliveryBoy = () => {
                     );
 
                     return;
+
                 }
 
 
@@ -501,6 +526,7 @@ const DeliveryBoy = () => {
                     );
 
                     return;
+
                 }
 
 
@@ -537,6 +563,7 @@ const DeliveryBoy = () => {
 
                 await refetchOrders();
 
+
             } catch (error) {
 
                 console.log(
@@ -564,37 +591,243 @@ const DeliveryBoy = () => {
         (order) => {
 
             if (
-                !order?.shopOrders
+                !order?.shopOrders ||
+                !Array.isArray(
+                    order.shopOrders
+                )
             ) {
+
                 return null;
+
             }
 
 
-            return order.shopOrders.find(
-                (shopOrder) => {
-
-                    const assignment =
-                        shopOrder
-                            ?.deliveryAssignment;
+            const currentUserId =
+                userData?._id;
 
 
-                    if (!assignment) {
-                        return false;
-                    }
-
-
-                    return (
-                        assignment.status ===
-                        "assigned" &&
-
-                        shopOrder.status ===
-                        "out for delivery"
-                    );
-
+            console.log(
+                "CHECKING ORDER FOR DELIVERY:",
+                {
+                    orderId: order?._id,
+                    currentUserId,
+                    shopOrders:
+                        order.shopOrders.length
                 }
-            ) || null;
+            );
+
+
+            return (
+                order.shopOrders.find(
+                    (shopOrder) => {
+
+                        const assignment =
+                            shopOrder
+                                ?.deliveryAssignment;
+
+
+                        if (!assignment) {
+
+                            return false;
+
+                        }
+
+
+                        // ---------------------------------------------
+                        // ASSIGNED TO
+                        // ---------------------------------------------
+
+                        const assignedToId =
+                            typeof assignment.assignedTo ===
+                            "object"
+
+                                ? assignment
+                                    ?.assignedTo
+                                    ?._id
+
+                                : assignment
+                                    ?.assignedTo;
+
+
+                        const isAssignedToCurrentBoy =
+                            assignedToId &&
+                            currentUserId &&
+                            String(
+                                assignedToId
+                            ) ===
+                            String(
+                                currentUserId
+                            );
+
+
+                        // ---------------------------------------------
+                        // STATUS
+                        // ---------------------------------------------
+
+                        const isAssigned =
+                            assignment.status ===
+                            "assigned";
+
+
+                        const isOutForDelivery =
+                            shopOrder.status ===
+                            "out for delivery";
+
+
+                        console.log(
+                            "SHOP ORDER CHECK:",
+                            {
+                                shopOrderId:
+                                    shopOrder?._id,
+
+                                shopOrderStatus:
+                                    shopOrder.status,
+
+                                assignmentId:
+                                    assignment?._id,
+
+                                assignmentStatus:
+                                    assignment?.status,
+
+                                assignedToId,
+
+                                currentUserId,
+
+                                isAssignedToCurrentBoy,
+
+                                isAssigned,
+
+                                isOutForDelivery
+                            }
+                        );
+
+
+                        /*
+                         * IMPORTANT
+                         *
+                         * We require the delivery assignment
+                         * to belong to the current delivery boy.
+                         *
+                         * And we allow either of the expected
+                         * active states.
+                         */
+
+                        return (
+                            isAssignedToCurrentBoy &&
+                            (
+                                isAssigned ||
+                                isOutForDelivery
+                            )
+                        );
+
+                    }
+                ) || null
+            );
 
         };
+
+
+    // =====================================================
+    // DETAILED ORDER DEBUG
+    // =====================================================
+
+    useEffect(() => {
+
+        console.log(
+            "========== DELIVERY ORDER STRUCTURE =========="
+        );
+
+
+        console.log(
+            "CURRENT DELIVERY BOY:",
+            {
+                id: userData?._id,
+                role: userData?.role,
+                fullName: userData?.fullName
+            }
+        );
+
+
+        console.log(
+            "TOTAL ORDERS:",
+            orders?.length || 0
+        );
+
+
+        orders?.forEach(
+            (
+                order,
+                orderIndex
+            ) => {
+
+                console.log(
+                    `ORDER ${orderIndex + 1}:`,
+                    order?._id
+                );
+
+
+                console.log(
+                    "CUSTOMER POSITION:",
+                    {
+                        latitude:
+                            order
+                                ?.deliveryAddress
+                                ?.latitude,
+
+                        longitude:
+                            order
+                                ?.deliveryAddress
+                                ?.longitude
+                    }
+                );
+
+
+                order?.shopOrders?.forEach(
+                    (
+                        shopOrder,
+                        shopIndex
+                    ) => {
+
+                        console.log(
+                            `SHOP ORDER ${shopIndex + 1}:`,
+                            {
+                                shopOrderId:
+                                    shopOrder?._id,
+
+                                status:
+                                    shopOrder?.status,
+
+                                deliveryAssignment:
+                                    shopOrder
+                                        ?.deliveryAssignment,
+
+                                assignmentStatus:
+                                    shopOrder
+                                        ?.deliveryAssignment
+                                        ?.status,
+
+                                assignedTo:
+                                    shopOrder
+                                        ?.deliveryAssignment
+                                        ?.assignedTo
+                            }
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+        console.log(
+            "=============================================="
+        );
+
+    }, [
+        orders,
+        userData
+    ]);
 
 
     // =====================================================
@@ -607,79 +840,117 @@ const DeliveryBoy = () => {
             if (
                 !Array.isArray(orders)
             ) {
+
                 return [];
+
             }
 
 
-            return orders
-                .map((order) => {
+            const deliveries =
+                orders
+                    .map(
+                        (order) => {
 
-                    const shopOrder =
-                        getShopOrder(order);
-
-
-                    if (!shopOrder) {
-                        return null;
-                    }
-
-
-                    const latitude =
-                        Number(
-                            order
-                                ?.deliveryAddress
-                                ?.latitude
-                        );
+                            const shopOrder =
+                                getShopOrder(
+                                    order
+                                );
 
 
-                    const longitude =
-                        Number(
-                            order
-                                ?.deliveryAddress
-                                ?.longitude
-                        );
+                            if (!shopOrder) {
+
+                                return null;
+
+                            }
 
 
-                    if (
-                        !Number.isFinite(latitude) ||
-                        !Number.isFinite(longitude)
-                    ) {
-
-                        return {
-                            order,
-                            shopOrder,
-                            customerPosition: null,
-                            distance: null
-                        };
-
-                    }
+                            const latitude =
+                                Number(
+                                    order
+                                        ?.deliveryAddress
+                                        ?.latitude
+                                );
 
 
-                    const customerPosition = [
-                        latitude,
-                        longitude
-                    ];
+                            const longitude =
+                                Number(
+                                    order
+                                        ?.deliveryAddress
+                                        ?.longitude
+                                );
 
 
-                    const distance =
-                        calculateDistance(
-                            customerPosition,
-                            deliveryBoyPosition
-                        );
+                            if (
+                                !Number.isFinite(
+                                    latitude
+                                ) ||
+                                !Number.isFinite(
+                                    longitude
+                                )
+                            ) {
+
+                                console.log(
+                                    "CUSTOMER COORDINATES INVALID:",
+                                    {
+                                        orderId:
+                                            order?._id,
+
+                                        latitude,
+
+                                        longitude
+                                    }
+                                );
 
 
-                    return {
-                        order,
-                        shopOrder,
-                        customerPosition,
-                        distance
-                    };
+                                return {
+                                    order,
+                                    shopOrder,
+                                    customerPosition:
+                                        null,
+                                    distance:
+                                        null
+                                };
 
-                })
-                .filter(Boolean);
+                            }
+
+
+                            const customerPosition = [
+                                latitude,
+                                longitude
+                            ];
+
+
+                            const distance =
+                                calculateDistance(
+                                    customerPosition,
+                                    deliveryBoyPosition
+                                );
+
+
+                            return {
+                                order,
+                                shopOrder,
+                                customerPosition,
+                                distance
+                            };
+
+                        }
+                    )
+                    .filter(Boolean);
+
+
+            console.log(
+                "ACTIVE DELIVERIES CALCULATED:",
+                deliveries
+            );
+
+
+            return deliveries;
 
         }, [
             orders,
-            deliveryBoyPosition
+            deliveryBoyPosition,
+            userData
         ]);
 
 
@@ -804,6 +1075,7 @@ const DeliveryBoy = () => {
                     );
 
                     return;
+
                 }
 
 
@@ -856,6 +1128,7 @@ const DeliveryBoy = () => {
 
                 await refetchOrders();
 
+
             } catch (error) {
 
                 console.log(
@@ -906,6 +1179,7 @@ const DeliveryBoy = () => {
                     );
 
                     return;
+
                 }
 
 
@@ -932,6 +1206,7 @@ const DeliveryBoy = () => {
                     );
 
                     return;
+
                 }
 
 
@@ -998,6 +1273,7 @@ const DeliveryBoy = () => {
 
 
                 await refetchOrders();
+
 
             } catch (error) {
 
