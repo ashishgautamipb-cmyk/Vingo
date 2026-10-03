@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { serverUrl } from "../App";
+
 import {
   MapContainer,
   TileLayer,
@@ -7,7 +8,9 @@ import {
   Popup,
   useMap,
 } from "react-leaflet";
+
 import L from "leaflet";
+
 import "leaflet/dist/leaflet.css";
 
 import {
@@ -20,9 +23,18 @@ import {
   FaTruck,
 } from "react-icons/fa6";
 
-import { useDispatch, useSelector } from "react-redux";
-import { clearCart } from "../redux/cartSlice";
-import { useNavigate } from "react-router-dom";
+import {
+  useDispatch,
+  useSelector
+} from "react-redux";
+
+import {
+  clearCart
+} from "../redux/cartSlice";
+
+import {
+  useNavigate
+} from "react-router-dom";
 
 
 // ======================================================
@@ -32,6 +44,7 @@ import { useNavigate } from "react-router-dom";
 delete L.Icon.Default.prototype._getIconUrl;
 
 L.Icon.Default.mergeOptions({
+
   iconRetinaUrl:
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
 
@@ -40,6 +53,7 @@ L.Icon.Default.mergeOptions({
 
   shadowUrl:
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+
 });
 
 
@@ -51,9 +65,13 @@ const API_KEY =
 // MAP MOVE COMPONENT
 // ======================================================
 
-function MapMove({ position }) {
+function MapMove({
+  position
+}) {
 
-  const map = useMap();
+  const map =
+    useMap();
+
 
   useEffect(() => {
 
@@ -64,7 +82,11 @@ function MapMove({ position }) {
       14
     );
 
-  }, [position, map]);
+  }, [
+    position,
+    map
+  ]);
+
 
   return null;
 }
@@ -76,9 +98,12 @@ function MapMove({ position }) {
 
 function CheckOut() {
 
-  const dispatch = useDispatch();
+  const dispatch =
+    useDispatch();
 
-  const navigate = useNavigate();
+
+  const navigate =
+    useNavigate();
 
 
   // ====================================================
@@ -111,24 +136,30 @@ function CheckOut() {
   const [position, setPosition] =
     useState(null);
 
+
   const [search, setSearch] =
     useState("");
+
 
   const [address, setAddress] =
     useState(
       currentAddress ||
-        currentCity ||
-        "Select delivery location"
+      currentCity ||
+      "Select delivery location"
     );
+
 
   const [loading, setLoading] =
     useState(false);
 
+
   const [paymentMethod, setPaymentMethod] =
     useState("cod");
 
+
   const [placingOrder, setPlacingOrder] =
     useState(false);
+
 
   const [locationSelected, setLocationSelected] =
     useState(false);
@@ -190,7 +221,9 @@ function CheckOut() {
         ]);
 
 
-        setLocationSelected(true);
+        setLocationSelected(
+          true
+        );
 
 
         await getAddress(
@@ -221,7 +254,9 @@ function CheckOut() {
         timeout: 15000,
         maximumAge: 0,
       }
+
     );
+
   };
 
 
@@ -255,6 +290,7 @@ function CheckOut() {
         throw new Error(
           "Failed to get address"
         );
+
       }
 
 
@@ -291,6 +327,7 @@ function CheckOut() {
         setAddress(
           "Selected delivery location"
         );
+
       }
 
     } catch (error) {
@@ -308,7 +345,9 @@ function CheckOut() {
     } finally {
 
       setLoading(false);
+
     }
+
   };
 
 
@@ -344,6 +383,7 @@ function CheckOut() {
         throw new Error(
           "Location search failed"
         );
+
       }
 
 
@@ -378,12 +418,14 @@ function CheckOut() {
       ]);
 
 
-      setLocationSelected(true);
+      setLocationSelected(
+        true
+      );
 
 
       setAddress(
         location.properties.formatted ||
-          search
+        search
       );
 
 
@@ -394,6 +436,7 @@ function CheckOut() {
           longitude: lon,
         }
       );
+
 
     } catch (error) {
 
@@ -407,10 +450,13 @@ function CheckOut() {
         "Unable to search this location."
       );
 
+
     } finally {
 
       setLoading(false);
+
     }
+
   };
 
 
@@ -459,7 +505,9 @@ function CheckOut() {
         ]);
 
 
-        setLocationSelected(true);
+        setLocationSelected(
+          true
+        );
 
 
         await getAddress(
@@ -496,7 +544,9 @@ function CheckOut() {
         timeout: 15000,
         maximumAge: 0,
       }
+
     );
+
   };
 
 
@@ -528,13 +578,16 @@ function CheckOut() {
     ]);
 
 
-    setLocationSelected(true);
+    setLocationSelected(
+      true
+    );
 
 
     getAddress(
       lat,
       lng
     );
+
   };
 
 
@@ -547,7 +600,7 @@ function CheckOut() {
       (sum, item) =>
         sum +
         Number(item.price) *
-          Number(item.quantity),
+        Number(item.quantity),
 
       0
     );
@@ -612,7 +665,7 @@ function CheckOut() {
       if (
         !address ||
         address ===
-          "Select delivery location"
+        "Select delivery location"
       ) {
 
         alert(
@@ -629,6 +682,7 @@ function CheckOut() {
 
       const latitude =
         Number(position[0]);
+
 
       const longitude =
         Number(position[1]);
@@ -649,13 +703,13 @@ function CheckOut() {
 
       try {
 
-        setPlacingOrder(true);
+        setPlacingOrder(
+          true
+        );
 
 
         // ==================================================
-        // IMPORTANT FIX
-        // Backend expects `items`
-        // NOT `cartItems`
+        // ORDER DATA
         // ==================================================
 
         const orderData = {
@@ -687,6 +741,7 @@ function CheckOut() {
                     ? item.shop._id
 
                     : item.shop,
+
               })
             ),
 
@@ -704,7 +759,9 @@ function CheckOut() {
 
             longitude:
               longitude,
+
           },
+
         };
 
 
@@ -758,20 +815,63 @@ function CheckOut() {
 
 
         // ==================================================
+        // GET JWT TOKEN
+        // ==================================================
+
+        const token =
+          localStorage.getItem(
+            "token"
+          );
+
+
+        // ==================================================
+        // CHECK TOKEN
+        // ==================================================
+
+        if (!token) {
+
+          alert(
+            "Your login session has expired. Please login again."
+          );
+
+          navigate(
+            "/signin"
+          );
+
+          return;
+        }
+
+
+        // ==================================================
         // API CALL
         // ==================================================
 
-        const response = await fetch(
-    `${serverUrl}/api/order/place-order`,
-    {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(orderData),
-    }
-);
+        const response =
+          await fetch(
+            `${serverUrl}/api/order/place-order`,
+            {
+
+              method: "POST",
+
+              headers: {
+
+                "Content-Type":
+                  "application/json",
+
+                Authorization:
+                  `Bearer ${token}`,
+
+              },
+
+              credentials: "include",
+
+              body:
+                JSON.stringify(
+                  orderData
+                ),
+
+            }
+          );
 
 
         const data =
@@ -792,8 +892,9 @@ function CheckOut() {
 
           throw new Error(
             data.message ||
-              "Failed to place order"
+            "Failed to place order"
           );
+
         }
 
 
@@ -816,6 +917,7 @@ function CheckOut() {
           "/order-placed"
         );
 
+
       } catch (error) {
 
         console.error(
@@ -826,13 +928,18 @@ function CheckOut() {
 
         alert(
           error.message ||
-            "Something went wrong while placing the order."
+          "Something went wrong while placing the order."
         );
+
 
       } finally {
 
-        setPlacingOrder(false);
+        setPlacingOrder(
+          false
+        );
+
       }
+
     };
 
 
@@ -899,7 +1006,9 @@ function CheckOut() {
                 ) {
 
                   searchLocation();
+
                 }
+
               }}
               placeholder="Search street, village, house..."
               className="w-full py-2 outline-none text-xs"
@@ -1356,7 +1465,9 @@ function CheckOut() {
       </div>
 
     </div>
+
   );
+
 }
 
 

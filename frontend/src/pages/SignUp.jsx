@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { FaEyeSlash, FaEye } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
@@ -12,6 +11,7 @@ import {
 } from "firebase/auth";
 
 import { auth } from "../../firebase";
+
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/userSlice";
 
@@ -82,12 +82,31 @@ function SignUp() {
 
       console.log("SIGNUP RESPONSE:", result.data);
 
-      // Save user data in Redux
-      dispatch(setUserData(result.data));
+      // =====================================
+      // SAVE BEARER TOKEN
+      // =====================================
+
+      if (result.data?.token) {
+        localStorage.setItem(
+          "token",
+          result.data.token
+        );
+      }
+
+      // =====================================
+      // SAVE USER DATA IN REDUX
+      // =====================================
+
+      dispatch(
+        setUserData(
+          result.data?.user || result.data
+        )
+      );
 
       alert("Account created successfully");
 
-      navigate("/signin");
+      // User is already logged in
+      navigate("/");
     } catch (error) {
       console.log("SIGNUP ERROR:", error);
 
@@ -111,7 +130,7 @@ function SignUp() {
   };
 
   // =====================================
-  // GOOGLE SIGN UP
+  // GOOGLE SIGN UP / AUTH
   // =====================================
 
   const handleGoogleAuth = async () => {
@@ -131,7 +150,10 @@ function SignUp() {
     try {
       setGoogleLoading(true);
 
-      // Create Google provider
+      // =====================================
+      // GOOGLE PROVIDER
+      // =====================================
+
       const provider = new GoogleAuthProvider();
 
       // Open Google popup
@@ -145,8 +167,11 @@ function SignUp() {
         result.user
       );
 
-      // Google user information
       const googleUser = result.user;
+
+      // =====================================
+      // GOOGLE DATA
+      // =====================================
 
       const googleData = {
         fullName: googleUser.displayName,
@@ -160,7 +185,10 @@ function SignUp() {
         googleData
       );
 
-      // Send Google user to backend
+      // =====================================
+      // SEND TO BACKEND
+      // =====================================
+
       const response = await axios.post(
         `${serverUrl}/api/auth/google-auth`,
         googleData,
@@ -174,9 +202,27 @@ function SignUp() {
         response.data
       );
 
-      // FIXED:
-      // data was undefined before
-      dispatch(setUserData(response.data));
+      // =====================================
+      // SAVE BEARER TOKEN
+      // =====================================
+
+      if (response.data?.token) {
+        localStorage.setItem(
+          "token",
+          response.data.token
+        );
+      }
+
+      // =====================================
+      // SAVE USER DATA
+      // =====================================
+
+      dispatch(
+        setUserData(
+          response.data?.user ||
+            response.data
+        )
+      );
 
       alert("Google authentication successful");
 
@@ -214,7 +260,9 @@ function SignUp() {
   return (
     <div
       className="min-h-screen w-full flex items-center justify-center p-4"
-      style={{ backgroundColor: bgColor }}
+      style={{
+        backgroundColor: bgColor,
+      }}
     >
       <div
         className="bg-white rounded-xl shadow-lg w-full max-w-md p-8"
@@ -229,7 +277,9 @@ function SignUp() {
 
         <h1
           className="text-3xl font-bold mb-2"
-          style={{ color: primaryColor }}
+          style={{
+            color: primaryColor,
+          }}
         >
           Vingo
         </h1>
@@ -422,7 +472,9 @@ function SignUp() {
         <button
           type="button"
           onClick={handleSignUp}
-          disabled={loading || googleLoading}
+          disabled={
+            loading || googleLoading
+          }
           className="w-full mt-4 flex items-center justify-center gap-2 border rounded-lg px-4 py-2 transition duration-200 bg-[#ff4d2d] text-white hover:bg-[#e64323] cursor-pointer disabled:opacity-50"
         >
           {loading
@@ -437,7 +489,9 @@ function SignUp() {
         <button
           type="button"
           onClick={handleGoogleAuth}
-          disabled={loading || googleLoading}
+          disabled={
+            loading || googleLoading
+          }
           className="w-full mt-4 flex items-center gap-2 justify-center border rounded-lg px-4 py-2 transition duration-200 border-gray-200 hover:bg-gray-100 cursor-pointer disabled:opacity-50"
         >
           <FcGoogle size={20} />
@@ -472,11 +526,3 @@ function SignUp() {
 }
 
 export default SignUp;
-
-
-
-  
-
- 
-
- 

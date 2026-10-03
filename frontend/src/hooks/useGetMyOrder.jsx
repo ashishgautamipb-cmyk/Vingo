@@ -32,13 +32,26 @@ const useGetMyOrders = () => {
 
                 try {
 
+                    // Get JWT token
+                    const token =
+                        localStorage.getItem("token");
+
+
                     const result =
                         await axios.get(
                             `${serverUrl}/api/order/my-orders`,
                             {
-                                withCredentials: true
+                                withCredentials: true,
+
+                                headers: token
+                                    ? {
+                                        Authorization:
+                                            `Bearer ${token}`
+                                    }
+                                    : {}
                             }
                         );
+
 
                     setOrders(
                         result.data.orders ||

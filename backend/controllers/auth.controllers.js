@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import genToken from "../utils/token.js";
 import { sendOtpMail } from "../utils/mail.js";
 
+
 // ======================================================
 // COOKIE OPTIONS
 // ======================================================
@@ -13,6 +14,7 @@ const cookieOptions = {
     sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
 };
+
 
 // ======================================================
 // SIGN UP
@@ -28,8 +30,7 @@ export const signUp = async (req, res) => {
             role
         } = req.body;
 
-        const existingUser =
-            await User.findOne({ email });
+        let existingUser = await User.findOne({ email });
 
         if (existingUser) {
             return res.status(400).json({
@@ -39,20 +40,20 @@ export const signUp = async (req, res) => {
 
         if (!password || password.length < 6) {
             return res.status(400).json({
-                message:
-                    "password must be at least 6 characters"
+                message: "password must be at least 6 characters"
             });
         }
 
         if (!mobile || mobile.length < 10) {
             return res.status(400).json({
-                message:
-                    "mobile no. should be of 10 digits"
+                message: "mobile no. should be of 10 digits"
             });
         }
 
-        const hashedPassword =
-            await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(
+            password,
+            10
+        );
 
         const user = await User.create({
             fullName,
@@ -62,29 +63,34 @@ export const signUp = async (req, res) => {
             password: hashedPassword
         });
 
-        const token =
-            await genToken(user._id);
+        const token = await genToken(user._id);
 
+        // Set cookie
         res.cookie(
             "token",
             token,
             cookieOptions
         );
 
-        return res.status(201).json(user);
+        // Don't send password to frontend
+        const safeUser = user.toObject();
+
+        delete safeUser.password;
+
+        return res.status(201).json({
+            user: safeUser,
+            token
+        });
 
     } catch (error) {
-
-        console.error(
-            "SIGNUP ERROR:",
-            error
-        );
+        console.error("SIGNUP ERROR:", error);
 
         return res.status(500).json({
             message: error.message
         });
     }
 };
+
 
 // ======================================================
 // SIGN IN
@@ -97,8 +103,7 @@ export const signIn = async (req, res) => {
             password
         } = req.body;
 
-        const user =
-            await User.findOne({ email });
+        const user = await User.findOne({ email });
 
         if (!user) {
             return res.status(400).json({
@@ -106,11 +111,10 @@ export const signIn = async (req, res) => {
             });
         }
 
-        const isMatch =
-            await bcrypt.compare(
-                password,
-                user.password
-            );
+        const isMatch = await bcrypt.compare(
+            password,
+            user.password
+        );
 
         if (!isMatch) {
             return res.status(400).json({
@@ -118,30 +122,34 @@ export const signIn = async (req, res) => {
             });
         }
 
-        const token =
-            await genToken(user._id);
+        const token = await genToken(user._id);
 
+        // Set cookie
         res.cookie(
             "token",
             token,
             cookieOptions
         );
 
-        return res.status(200).json(user);
+        // Don't send password to frontend
+        const safeUser = user.toObject();
+
+        delete safeUser.password;
+
+        return res.status(200).json({
+            user: safeUser,
+            token
+        });
 
     } catch (error) {
-
-        console.error(
-            "SIGN IN ERROR:",
-            error
-        );
+        console.error("SIGN IN ERROR:", error);
 
         return res.status(500).json({
-            message:
-                `sign in error ${error.message}`
+            message: `sign in error ${error.message}`
         });
     }
 };
+
 
 // ======================================================
 // SIGN OUT
@@ -152,11 +160,7 @@ export const signOut = async (req, res) => {
 
         res.clearCookie(
             "token",
-            {
-                httpOnly: true,
-                secure: true,
-                sameSite: "none"
-            }
+            cookieOptions
         );
 
         return res.status(200).json({
@@ -165,17 +169,12 @@ export const signOut = async (req, res) => {
 
     } catch (error) {
 
-        console.error(
-            "SIGN OUT ERROR:",
-            error
-        );
-
         return res.status(500).json({
-            message:
-                `sign out error ${error.message}`
+            message: `log out error ${error.message}`
         });
     }
 };
+
 
 // ======================================================
 // SEND OTP
@@ -186,27 +185,22 @@ export const sendOtp = async (req, res) => {
 
         const { email } = req.body;
 
-        const user =
-            await User.findOne({ email });
+        const user = await User.findOne({ email });
 
         if (!user) {
             return res.status(400).json({
-                message:
-                    "user does not exist."
+                message: "user does not exist."
             });
         }
 
-        const otp =
-            Math.floor(
-                1000 +
-                Math.random() * 9000
-            ).toString();
+        const otp = Math.floor(
+            1000 + Math.random() * 9000
+        ).toString();
 
         user.resetOtp = otp;
 
         user.OtpExpires =
-            Date.now() +
-            5 * 60 * 1000;
+            Date.now() + 5 * 60 * 1000;
 
         user.isOtpVerified = false;
 
@@ -218,23 +212,17 @@ export const sendOtp = async (req, res) => {
         );
 
         return res.status(200).json({
-            message:
-                "otp sent successfully"
+            message: "otp sent successfully"
         });
 
     } catch (error) {
 
-        console.error(
-            "SEND OTP ERROR:",
-            error
-        );
-
         return res.status(500).json({
-            message:
-                `send otp error ${error.message}`
+            message: `send otp error ${error.message}`
         });
     }
 };
+
 
 // ======================================================
 // VERIFY OTP
@@ -248,8 +236,7 @@ export const verifyOtp = async (req, res) => {
             otp
         } = req.body;
 
-        const user =
-            await User.findOne({ email });
+        const user = await User.findOne({ email });
 
         if (
             !user ||
@@ -257,45 +244,36 @@ export const verifyOtp = async (req, res) => {
             user.OtpExpires < Date.now()
         ) {
             return res.status(400).json({
-                message:
-                    "invalid or expired OTP"
+                message: "invalid or expired OTP"
             });
         }
 
         user.isOtpVerified = true;
 
         user.resetOtp = undefined;
+
         user.OtpExpires = undefined;
 
         await user.save();
 
         return res.status(200).json({
-            message:
-                "otp verified successfully"
+            message: "otp verified successfully"
         });
 
     } catch (error) {
 
-        console.error(
-            "VERIFY OTP ERROR:",
-            error
-        );
-
         return res.status(500).json({
-            message:
-                `verify otp error ${error.message}`
+            message: `verify otp error ${error.message}`
         });
     }
 };
+
 
 // ======================================================
 // RESET PASSWORD
 // ======================================================
 
-export const resetPassword = async (
-    req,
-    res
-) => {
+export const resetPassword = async (req, res) => {
     try {
 
         const {
@@ -303,16 +281,14 @@ export const resetPassword = async (
             newPassword
         } = req.body;
 
-        const user =
-            await User.findOne({ email });
+        const user = await User.findOne({ email });
 
         if (
             !user ||
             !user.isOtpVerified
         ) {
             return res.status(400).json({
-                message:
-                    "OTP verification required"
+                message: "OTP verification required"
             });
         }
 
@@ -321,8 +297,7 @@ export const resetPassword = async (
             newPassword.length < 6
         ) {
             return res.status(400).json({
-                message:
-                    "password must be at least 6 characters"
+                message: "password must be at least 6 characters"
             });
         }
 
@@ -332,40 +307,30 @@ export const resetPassword = async (
                 10
             );
 
-        user.password =
-            hashedPassword;
+        user.password = hashedPassword;
 
         user.isOtpVerified = false;
 
         await user.save();
 
         return res.status(200).json({
-            message:
-                "password reset successfully"
+            message: "password reset successfully"
         });
 
     } catch (error) {
 
-        console.error(
-            "RESET PASSWORD ERROR:",
-            error
-        );
-
         return res.status(500).json({
-            message:
-                `reset password error ${error.message}`
+            message: `reset password error ${error.message}`
         });
     }
 };
+
 
 // ======================================================
 // GOOGLE AUTH
 // ======================================================
 
-export const googleAuth = async (
-    req,
-    res
-) => {
+export const googleAuth = async (req, res) => {
     try {
 
         const {
@@ -375,8 +340,9 @@ export const googleAuth = async (
             role
         } = req.body;
 
-        let user =
-            await User.findOne({ email });
+        let user = await User.findOne({
+            email
+        });
 
         if (!user) {
 
@@ -386,18 +352,44 @@ export const googleAuth = async (
                 mobile,
                 role
             });
+
+        } else {
+
+            // Update missing information if available
+            if (!user.fullName && fullName) {
+                user.fullName = fullName;
+            }
+
+            if (!user.mobile && mobile) {
+                user.mobile = mobile;
+            }
+
+            if (!user.role && role) {
+                user.role = role;
+            }
+
+            await user.save();
         }
 
         const token =
             await genToken(user._id);
 
+        // Set cookie
         res.cookie(
             "token",
             token,
             cookieOptions
         );
 
-        return res.status(200).json(user);
+        // Don't send password
+        const safeUser = user.toObject();
+
+        delete safeUser.password;
+
+        return res.status(200).json({
+            user: safeUser,
+            token
+        });
 
     } catch (error) {
 
@@ -407,8 +399,7 @@ export const googleAuth = async (
         );
 
         return res.status(500).json({
-            message:
-                `google auth error ${error.message}`
+            message: `google auth error ${error.message}`
         });
     }
 };

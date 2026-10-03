@@ -479,6 +479,16 @@ const CreateEditShop = () => {
 
             /*
             =====================================
+            GET TOKEN
+            =====================================
+            */
+
+            const token =
+                localStorage.getItem("token");
+
+
+            /*
+            =====================================
             CREATE RESTAURANT
             =====================================
             */
@@ -490,7 +500,14 @@ const CreateEditShop = () => {
                         `${serverUrl}/api/shop/create`,
                         data,
                         {
-                            withCredentials: true
+                            withCredentials: true,
+
+                            headers: token
+                                ? {
+                                    Authorization:
+                                        `Bearer ${token}`
+                                }
+                                : {}
                         }
                     );
 
@@ -532,7 +549,14 @@ const CreateEditShop = () => {
                         `${serverUrl}/api/shop/edit/${myShopData._id}`,
                         data,
                         {
-                            withCredentials: true
+                            withCredentials: true,
+
+                            headers: token
+                                ? {
+                                    Authorization:
+                                        `Bearer ${token}`
+                                }
+                                : {}
                         }
                     );
 

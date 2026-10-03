@@ -1,16 +1,30 @@
-
 import jwt from "jsonwebtoken";
 
 const isAuth = async (req, res, next) => {
     try {
-        const token = req.cookies?.token;
+        let token = req.cookies?.token;
 
+        // If cookie token is not available,
+        // check Authorization header
+        if (!token) {
+            const authHeader = req.headers.authorization;
+
+            if (
+                authHeader &&
+                authHeader.startsWith("Bearer ")
+            ) {
+                token = authHeader.split(" ")[1];
+            }
+        }
+
+        // No token found
         if (!token) {
             return res.status(400).json({
                 message: "Token not found"
             });
         }
 
+        // Verify token
         const decodeToken = jwt.verify(
             token,
             process.env.JWT_SECRET
@@ -38,4 +52,3 @@ const isAuth = async (req, res, next) => {
 };
 
 export default isAuth;
-
