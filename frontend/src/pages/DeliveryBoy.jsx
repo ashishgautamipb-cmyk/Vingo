@@ -1,5 +1,6 @@
 import React, {
     useEffect,
+    useMemo,
     useState
 } from "react";
 
@@ -46,18 +47,11 @@ const calculateDistance = (
         return null;
     }
 
-    const latitude1 =
-        Number(position1[0]);
+    const latitude1 = Number(position1[0]);
+    const longitude1 = Number(position1[1]);
 
-    const longitude1 =
-        Number(position1[1]);
-
-    const latitude2 =
-        Number(position2[0]);
-
-    const longitude2 =
-        Number(position2[1]);
-
+    const latitude2 = Number(position2[0]);
+    const longitude2 = Number(position2[1]);
 
     if (
         !Number.isFinite(latitude1) ||
@@ -68,9 +62,7 @@ const calculateDistance = (
         return null;
     }
 
-
     const earthRadius = 6371000;
-
 
     const lat1 =
         latitude1 *
@@ -82,7 +74,6 @@ const calculateDistance = (
         Math.PI /
         180;
 
-
     const differenceLatitude =
         (
             latitude2 -
@@ -91,7 +82,6 @@ const calculateDistance = (
         Math.PI /
         180;
 
-
     const differenceLongitude =
         (
             longitude2 -
@@ -99,7 +89,6 @@ const calculateDistance = (
         ) *
         Math.PI /
         180;
-
 
     const a =
         Math.sin(
@@ -119,14 +108,12 @@ const calculateDistance = (
             differenceLongitude / 2
         );
 
-
     const c =
         2 *
         Math.atan2(
             Math.sqrt(a),
             Math.sqrt(1 - a)
         );
-
 
     return earthRadius * c;
 };
@@ -153,7 +140,7 @@ const DeliveryBoy = () => {
 
 
     // =====================================================
-    // DELIVERY REQUESTS
+    // STATES
     // =====================================================
 
     const [
@@ -161,55 +148,65 @@ const DeliveryBoy = () => {
         setDeliveryRequests
     ] = useState([]);
 
-
-    // =====================================================
-    // DELIVERY BOY LOCATION
-    // =====================================================
-
     const [
         deliveryBoyPosition,
         setDeliveryBoyPosition
     ] = useState(null);
-
-
-    // =====================================================
-    // OTP INPUT
-    // =====================================================
 
     const [
         otpInputs,
         setOtpInputs
     ] = useState({});
 
-
-    // =====================================================
-    // OTP GENERATED
-    // =====================================================
-
     const [
         otpGenerated,
         setOtpGenerated
     ] = useState({});
-
-
-    // =====================================================
-    // VERIFYING OTP
-    // =====================================================
 
     const [
         verifyingOtp,
         setVerifyingOtp
     ] = useState({});
 
-
-    // =====================================================
-    // MARKING DELIVERY
-    // =====================================================
-
     const [
         markingDelivery,
         setMarkingDelivery
     ] = useState({});
+
+
+    // =====================================================
+    // DEBUG - COMPONENT MOUNT
+    // =====================================================
+
+    useEffect(() => {
+
+        console.log(
+            "=========================================="
+        );
+
+        console.log(
+            "DELIVERY BOY COMPONENT MOUNTED"
+        );
+
+        console.log(
+            "USER DATA:",
+            {
+                id: userData?._id,
+                role: userData?.role,
+                fullName: userData?.fullName
+            }
+        );
+
+        console.log(
+            "ORDERS COUNT:",
+            orders?.length || 0
+        );
+
+        console.log(
+            "=========================================="
+        );
+
+    }, []);
 
 
     // =====================================================
@@ -228,11 +225,9 @@ const DeliveryBoy = () => {
                             "token"
                         );
 
-
                     if (!token) {
                         return;
                     }
-
 
                     const result =
                         await axios.get(
@@ -247,6 +242,10 @@ const DeliveryBoy = () => {
                             }
                         );
 
+                    console.log(
+                        "DELIVERY REQUEST RESPONSE:",
+                        result.data
+                    );
 
                     setDeliveryRequests(
                         result.data?.requests ||
@@ -277,18 +276,14 @@ const DeliveryBoy = () => {
 
 
         return () => {
-
-            clearInterval(
-                interval
-            );
-
+            clearInterval(interval);
         };
 
     }, []);
 
 
     // =====================================================
-    // INITIAL LOCATION FROM REDUX
+    // LOCATION FROM REDUX
     // =====================================================
 
     useEffect(() => {
@@ -299,51 +294,64 @@ const DeliveryBoy = () => {
                 ?.coordinates;
 
 
+        console.log(
+            "REDUX USER LOCATION:",
+            coordinates
+        );
+
+
         if (
-            Array.isArray(coordinates) &&
-            coordinates.length === 2
+            !Array.isArray(coordinates) ||
+            coordinates.length !== 2
         ) {
-
-            const longitude =
-                Number(coordinates[0]);
-
-            const latitude =
-                Number(coordinates[1]);
-
-
-            if (
-                Number.isFinite(latitude) &&
-                Number.isFinite(longitude)
-            ) {
-
-                console.log(
-                    "LOCATION FROM USER DATA:",
-                    {
-                        latitude,
-                        longitude
-                    }
-                );
-
-
-                setDeliveryBoyPosition([
-                    latitude,
-                    longitude
-                ]);
-
-            }
-
+            return;
         }
+
+
+        const longitude =
+            Number(coordinates[0]);
+
+        const latitude =
+            Number(coordinates[1]);
+
+
+        if (
+            !Number.isFinite(latitude) ||
+            !Number.isFinite(longitude)
+        ) {
+            return;
+        }
+
+
+        const position = [
+            latitude,
+            longitude
+        ];
+
+
+        console.log(
+            "SETTING POSITION FROM REDUX:",
+            position
+        );
+
+
+        setDeliveryBoyPosition(
+            position
+        );
 
     }, [userData]);
 
 
     // =====================================================
-    // LIVE DELIVERY BOY LOCATION
+    // LIVE GPS
     // =====================================================
 
     useEffect(() => {
 
         if (!userData) {
+            console.log(
+                "GPS: USER DATA NOT READY"
+            );
             return;
         }
 
@@ -352,6 +360,11 @@ const DeliveryBoy = () => {
             userData.role !==
             "deliveryBoy"
         ) {
+
+            console.log(
+                "GPS: USER IS NOT DELIVERY BOY"
+            );
+
             return;
         }
 
@@ -361,7 +374,7 @@ const DeliveryBoy = () => {
         ) {
 
             console.log(
-                "Geolocation is not supported"
+                "GPS: GEOLOCATION NOT SUPPORTED"
             );
 
             return;
@@ -391,6 +404,11 @@ const DeliveryBoy = () => {
                     !Number.isFinite(latitude) ||
                     !Number.isFinite(longitude)
                 ) {
+
+                    console.log(
+                        "GPS: INVALID POSITION"
+                    );
+
                     return;
                 }
 
@@ -418,7 +436,7 @@ const DeliveryBoy = () => {
             (error) => {
 
                 console.log(
-                    "Delivery boy location error:",
+                    "DELIVERY BOY GPS ERROR:",
                     error.message
                 );
 
@@ -464,7 +482,9 @@ const DeliveryBoy = () => {
     // =====================================================
 
     const acceptDelivery =
-        async (assignmentId) => {
+        async (
+            assignmentId
+        ) => {
 
             try {
 
@@ -488,7 +508,6 @@ const DeliveryBoy = () => {
                     await axios.put(
                         `${serverUrl}/api/order/accept-delivery/${assignmentId}`,
                         {},
-
                         {
                             withCredentials: true,
 
@@ -583,71 +602,85 @@ const DeliveryBoy = () => {
     // =====================================================
 
     const activeDeliveries =
-        orders
-            .map((order) => {
+        useMemo(() => {
 
-                const shopOrder =
-                    getShopOrder(order);
-
-
-                if (!shopOrder) {
-                    return null;
-                }
+            if (
+                !Array.isArray(orders)
+            ) {
+                return [];
+            }
 
 
-                const latitude =
-                    Number(
-                        order
-                            ?.deliveryAddress
-                            ?.latitude
-                    );
+            return orders
+                .map((order) => {
+
+                    const shopOrder =
+                        getShopOrder(order);
 
 
-                const longitude =
-                    Number(
-                        order
-                            ?.deliveryAddress
-                            ?.longitude
-                    );
+                    if (!shopOrder) {
+                        return null;
+                    }
 
 
-                if (
-                    !Number.isFinite(latitude) ||
-                    !Number.isFinite(longitude)
-                ) {
+                    const latitude =
+                        Number(
+                            order
+                                ?.deliveryAddress
+                                ?.latitude
+                        );
+
+
+                    const longitude =
+                        Number(
+                            order
+                                ?.deliveryAddress
+                                ?.longitude
+                        );
+
+
+                    if (
+                        !Number.isFinite(latitude) ||
+                        !Number.isFinite(longitude)
+                    ) {
+
+                        return {
+                            order,
+                            shopOrder,
+                            customerPosition: null,
+                            distance: null
+                        };
+
+                    }
+
+
+                    const customerPosition = [
+                        latitude,
+                        longitude
+                    ];
+
+
+                    const distance =
+                        calculateDistance(
+                            customerPosition,
+                            deliveryBoyPosition
+                        );
+
 
                     return {
                         order,
                         shopOrder,
-                        customerPosition: null,
-                        distance: null
+                        customerPosition,
+                        distance
                     };
 
-                }
+                })
+                .filter(Boolean);
 
-
-                const customerPosition = [
-                    latitude,
-                    longitude
-                ];
-
-
-                const distance =
-                    calculateDistance(
-                        customerPosition,
-                        deliveryBoyPosition
-                    );
-
-
-                return {
-                    order,
-                    shopOrder,
-                    customerPosition,
-                    distance
-                };
-
-            })
-            .filter(Boolean);
+        }, [
+            orders,
+            deliveryBoyPosition
+        ]);
 
 
     // =====================================================
@@ -659,32 +692,40 @@ const DeliveryBoy = () => {
             (delivery) =>
                 Array.isArray(
                     delivery.customerPosition
-                )
+                ) &&
+                delivery.customerPosition.length ===
+                2
         ) || null;
 
 
     // =====================================================
-    // DEBUG
+    // MAP DEBUG
     // =====================================================
 
     useEffect(() => {
 
         console.log(
+            "=========================================="
+        );
+
+        console.log(
             "========== DELIVERY UI =========="
         );
 
+        console.log(
+            "ORDERS:",
+            orders?.length || 0
+        );
 
         console.log(
             "ACTIVE DELIVERIES:",
-            activeDeliveries
+            activeDeliveries.length
         );
-
 
         console.log(
             "DELIVERY BOY POSITION:",
             deliveryBoyPosition
         );
-
 
         console.log(
             "CURRENT MAP DELIVERY:",
@@ -699,16 +740,34 @@ const DeliveryBoy = () => {
                 currentDelivery.customerPosition
             );
 
+        } else {
+
+            console.log(
+                "MAP CUSTOMER POSITION: NONE"
+            );
+
         }
 
 
         console.log(
-            "================================"
+            "MAP SHOULD RENDER:",
+            Boolean(
+                currentDelivery &&
+                currentDelivery.customerPosition &&
+                deliveryBoyPosition
+            )
+        );
+
+
+        console.log(
+            "=========================================="
         );
 
     }, [
         orders,
-        deliveryBoyPosition
+        activeDeliveries,
+        deliveryBoyPosition,
+        currentDelivery
     ]);
 
 
@@ -752,7 +811,6 @@ const DeliveryBoy = () => {
                     await axios.put(
                         `${serverUrl}/api/order/mark-delivery/${assignmentId}`,
                         {},
-
                         {
                             withCredentials: true,
 
@@ -804,12 +862,6 @@ const DeliveryBoy = () => {
                     "Mark delivery error:",
                     error.response?.data ||
                     error.message
-                );
-
-
-                alert(
-                    error.response?.data?.message ||
-                    "Unable to mark delivery"
                 );
 
             } finally {
@@ -886,11 +938,9 @@ const DeliveryBoy = () => {
                 const result =
                     await axios.put(
                         `${serverUrl}/api/order/verify-delivery-otp/${assignmentId}`,
-
                         {
                             otp
                         },
-
                         {
                             withCredentials: true,
 
@@ -920,11 +970,9 @@ const DeliveryBoy = () => {
                             ...prev
                         };
 
-
                         delete updated[
                             assignmentId
                         ];
-
 
                         return updated;
 
@@ -939,11 +987,9 @@ const DeliveryBoy = () => {
                             ...prev
                         };
 
-
                         delete updated[
                             assignmentId
                         ];
-
 
                         return updated;
 
@@ -1213,12 +1259,20 @@ const DeliveryBoy = () => {
 
 
                     {/* =================================================
-                        SINGLE TRACKING MAP
+                        TRACKING MAP
                     ================================================= */}
 
                     {currentDelivery &&
-                        currentDelivery.customerPosition &&
-                        deliveryBoyPosition ? (
+                        Array.isArray(
+                            currentDelivery.customerPosition
+                        ) &&
+                        currentDelivery.customerPosition.length ===
+                        2 &&
+                        Array.isArray(
+                            deliveryBoyPosition
+                        ) &&
+                        deliveryBoyPosition.length ===
+                        2 ? (
 
                         <div
                             className="
@@ -1380,7 +1434,6 @@ const DeliveryBoy = () => {
                                 ({
                                     order,
                                     shopOrder,
-                                    customerPosition,
                                     distance
                                 }) => {
 
@@ -1631,8 +1684,7 @@ const DeliveryBoy = () => {
                                                         `}
                                                     >
 
-                                                        {distance >=
-                                                            1000
+                                                        {distance >= 1000
 
                                                             ? `${(
                                                                 distance /
@@ -1810,20 +1862,15 @@ const DeliveryBoy = () => {
 
                                                         <input
                                                             type="text"
-
                                                             inputMode="numeric"
-
                                                             autoComplete="one-time-code"
-
                                                             maxLength={6}
-
                                                             value={
                                                                 otpInputs[
                                                                     assignmentId
                                                                 ] ||
                                                                 ""
                                                             }
-
                                                             onChange={(
                                                                 event
                                                             ) => {
@@ -1852,9 +1899,7 @@ const DeliveryBoy = () => {
                                                                 );
 
                                                             }}
-
                                                             placeholder="Enter 6 digit OTP"
-
                                                             className="
                                                                 w-full
                                                                 border
@@ -1879,7 +1924,6 @@ const DeliveryBoy = () => {
                                                                     assignmentId
                                                                 )
                                                             }
-
                                                             disabled={
                                                                 verifyingOtp[
                                                                     assignmentId
@@ -1892,7 +1936,6 @@ const DeliveryBoy = () => {
                                                                 ).length !==
                                                                 6
                                                             }
-
                                                             className="
                                                                 w-full
                                                                 mt-3
