@@ -8,30 +8,39 @@ const useGetCurrentUser = () => {
 
     const dispatch = useDispatch();
 
-
     useEffect(() => {
 
         const fetchUser = async () => {
 
             try {
 
+                const token =
+                    localStorage.getItem("token");
+
+                if (!token) {
+                    console.log(
+                        "CURRENT USER: Token not found"
+                    );
+                    return;
+                }
+
                 const result =
                     await axios.get(
-
                         `${serverUrl}/api/user/current-user`,
-
                         {
-                            withCredentials: true
+                            withCredentials: true,
+
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`
+                            }
                         }
-
                     );
-
 
                 console.log(
                     "CURRENT USER:",
                     result.data
                 );
-
 
                 dispatch(
                     setUserData(
@@ -39,30 +48,22 @@ const useGetCurrentUser = () => {
                     )
                 );
 
-
             } catch (error) {
 
                 console.log(
-
                     "CURRENT USER ERROR:",
-
                     error.response?.data ||
                     error.message
-
                 );
 
             }
 
         };
 
-
         fetchUser();
-
 
     }, [dispatch]);
 
-
 };
-
 
 export default useGetCurrentUser;
