@@ -219,7 +219,7 @@ const DeliveryBoy = () => {
             "=========================================="
         );
 
-    }, []);
+    }, [userData, orders]);
 
 
     // =====================================================
@@ -239,6 +239,9 @@ const DeliveryBoy = () => {
                         );
 
                     if (!token) {
+                        console.log(
+                            "DELIVERY REQUEST: TOKEN NOT FOUND"
+                        );
                         return;
                     }
 
@@ -320,6 +323,10 @@ const DeliveryBoy = () => {
             coordinates.length !== 2
         ) {
 
+            console.log(
+                "REDUX LOCATION NOT AVAILABLE"
+            );
+
             return;
 
         }
@@ -336,6 +343,11 @@ const DeliveryBoy = () => {
             !Number.isFinite(latitude) ||
             !Number.isFinite(longitude)
         ) {
+
+            console.log(
+                "REDUX LOCATION INVALID:",
+                coordinates
+            );
 
             return;
 
@@ -602,15 +614,11 @@ const DeliveryBoy = () => {
             }
 
 
-            const currentUserId =
-                userData?._id;
-
-
             console.log(
                 "CHECKING ORDER FOR DELIVERY:",
                 {
                     orderId: order?._id,
-                    currentUserId,
+                    currentUserId: userData?._id,
                     shopOrders:
                         order.shopOrders.length
                 }
@@ -628,41 +636,15 @@ const DeliveryBoy = () => {
 
                         if (!assignment) {
 
+                            console.log(
+                                "SHOP ORDER HAS NO ASSIGNMENT:",
+                                shopOrder?._id
+                            );
+
                             return false;
 
                         }
 
-
-                        // ---------------------------------------------
-                        // ASSIGNED TO
-                        // ---------------------------------------------
-
-                        const assignedToId =
-                            typeof assignment.assignedTo ===
-                            "object"
-
-                                ? assignment
-                                    ?.assignedTo
-                                    ?._id
-
-                                : assignment
-                                    ?.assignedTo;
-
-
-                        const isAssignedToCurrentBoy =
-                            assignedToId &&
-                            currentUserId &&
-                            String(
-                                assignedToId
-                            ) ===
-                            String(
-                                currentUserId
-                            );
-
-
-                        // ---------------------------------------------
-                        // STATUS
-                        // ---------------------------------------------
 
                         const isAssigned =
                             assignment.status ===
@@ -689,11 +671,11 @@ const DeliveryBoy = () => {
                                 assignmentStatus:
                                     assignment?.status,
 
-                                assignedToId,
+                                assignedTo:
+                                    assignment?.assignedTo,
 
-                                currentUserId,
-
-                                isAssignedToCurrentBoy,
+                                currentUserId:
+                                    userData?._id,
 
                                 isAssigned,
 
@@ -703,21 +685,17 @@ const DeliveryBoy = () => {
 
 
                         /*
-                         * IMPORTANT
+                         * getMyOrders() from the backend already
+                         * returns assignments belonging to the
+                         * current delivery boy.
                          *
-                         * We require the delivery assignment
-                         * to belong to the current delivery boy.
-                         *
-                         * And we allow either of the expected
-                         * active states.
+                         * Therefore we don't additionally require
+                         * assignedTo === current user here.
                          */
 
                         return (
-                            isAssignedToCurrentBoy &&
-                            (
-                                isAssigned ||
-                                isOutForDelivery
-                            )
+                            isAssigned &&
+                            isOutForDelivery
                         );
 
                     }
@@ -840,6 +818,10 @@ const DeliveryBoy = () => {
             if (
                 !Array.isArray(orders)
             ) {
+
+                console.log(
+                    "ACTIVE DELIVERIES: ORDERS IS NOT ARRAY"
+                );
 
                 return [];
 
@@ -1459,6 +1441,9 @@ const DeliveryBoy = () => {
                                                             order
                                                                 ?.deliveryAddress
                                                                 ?.address ||
+                                                            order
+                                                                ?.deliveryAddress
+                                                                ?.text ||
                                                             "Customer location"
                                                         }
                                                     </p>
@@ -1871,6 +1856,9 @@ const DeliveryBoy = () => {
                                                                 order
                                                                     ?.deliveryAddress
                                                                     ?.address ||
+                                                                order
+                                                                    ?.deliveryAddress
+                                                                    ?.text ||
                                                                 "Customer location"
                                                             }
                                                         </p>
