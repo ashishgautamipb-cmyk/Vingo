@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { serverUrl } from "../App";
 import {
   MapContainer,
   TileLayer,
@@ -760,27 +761,17 @@ function CheckOut() {
         // API CALL
         // ==================================================
 
-        const response =
-          await fetch(
-            "http://localhost:5000/api/order/place-order",
-            {
-
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-
-              credentials:
-                "include",
-
-              body:
-                JSON.stringify(
-                  orderData
-                ),
-            }
-          );
+        const response = await fetch(
+    `${serverUrl}/api/order/place-order`,
+    {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(orderData),
+    }
+);
 
 
         const data =
