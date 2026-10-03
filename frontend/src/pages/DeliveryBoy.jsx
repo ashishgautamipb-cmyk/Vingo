@@ -1178,7 +1178,7 @@ const DeliveryBoy = () => {
                         mb-6
                     "
                 >
-                    Delivery Dashboard
+                    Delivery Dashboard v2
                 </h1>
 
 
