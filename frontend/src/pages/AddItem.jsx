@@ -126,6 +126,39 @@ const AddItem = () => {
             setLoading(true);
 
 
+            // ==========================================
+            // GET LOGIN TOKEN
+            // ==========================================
+
+            const token =
+                localStorage.getItem(
+                    "token"
+                );
+
+
+            console.log(
+                "ADD ITEM TOKEN:",
+                !!token
+            );
+
+
+            if (!token) {
+
+                alert(
+                    "Your login session has expired. Please login again."
+                );
+
+                navigate("/signin");
+
+                return;
+
+            }
+
+
+            // ==========================================
+            // FORM DATA
+            // ==========================================
+
             const data =
                 new FormData();
 
@@ -160,6 +193,10 @@ const AddItem = () => {
             );
 
 
+            // ==========================================
+            // ADD ITEM API
+            // ==========================================
+
             const result =
                 await axios.post(
 
@@ -168,7 +205,12 @@ const AddItem = () => {
                     data,
 
                     {
-                        withCredentials: true
+                        withCredentials: true,
+
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`
+                        }
                     }
 
                 );
@@ -179,6 +221,10 @@ const AddItem = () => {
                 result.data
             );
 
+
+            // ==========================================
+            // UPDATE SHOP IN REDUX
+            // ==========================================
 
             if (
                 result.data.shop
@@ -223,28 +269,53 @@ const AddItem = () => {
             setLoading(false);
 
         }
+
     };
 
 
     return (
 
-        <div className="min-h-screen bg-[#fff9f6] px-4 pt-24 pb-10">
+        <div
+            className="
+                min-h-screen
+                bg-[#fff9f6]
+                px-4
+                pt-24
+                pb-10
+            "
+        >
 
+            <div
+                className="
+                    max-w-xl
+                    mx-auto
+                    bg-white
+                    rounded-2xl
+                    shadow-md
+                    p-6
+                "
+            >
 
-            <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-md p-6">
-
-
-                <h1 className="text-2xl font-bold text-gray-800 mb-1">
-
+                <h1
+                    className="
+                        text-2xl
+                        font-bold
+                        text-gray-800
+                        mb-1
+                    "
+                >
                     Add Food Item
-
                 </h1>
 
 
-                <p className="text-sm text-gray-500 mb-6">
-
+                <p
+                    className="
+                        text-sm
+                        text-gray-500
+                        mb-6
+                    "
+                >
                     Add a new item to your restaurant menu.
-
                 </p>
 
 
@@ -252,41 +323,49 @@ const AddItem = () => {
                     onSubmit={
                         handleSubmit
                     }
-                    className="space-y-5"
+                    className="
+                        space-y-5
+                    "
                 >
-
 
                     {/* FOOD NAME */}
 
                     <div>
 
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-
+                        <label
+                            className="
+                                block
+                                text-sm
+                                font-medium
+                                text-gray-700
+                                mb-2
+                            "
+                        >
                             Food Name
-
                         </label>
 
 
                         <input
-
                             type="text"
-
                             name="name"
-
                             value={
                                 formData.name
                             }
-
                             onChange={
                                 handleChange
                             }
-
                             placeholder="Enter food name"
-
                             required
-
-                            className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-[#ff4d2d]"
-
+                            className="
+                                w-full
+                                border
+                                border-gray-300
+                                rounded-xl
+                                px-4
+                                py-3
+                                outline-none
+                                focus:border-[#ff4d2d]
+                            "
                         />
 
                     </div>
@@ -296,112 +375,86 @@ const AddItem = () => {
 
                     <div>
 
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-
+                        <label
+                            className="
+                                block
+                                text-sm
+                                font-medium
+                                text-gray-700
+                                mb-2
+                            "
+                        >
                             Category
-
                         </label>
 
 
                         <select
-
                             name="category"
-
                             value={
                                 formData.category
                             }
-
                             onChange={
                                 handleChange
                             }
-
                             required
-
-                            className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-[#ff4d2d]"
-
+                            className="
+                                w-full
+                                border
+                                border-gray-300
+                                rounded-xl
+                                px-4
+                                py-3
+                                outline-none
+                                focus:border-[#ff4d2d]
+                            "
                         >
 
                             <option value="">
-
                                 Select Category
-
                             </option>
-
 
                             <option value="Snacks">
-
                                 Snacks
-
                             </option>
-
 
                             <option value="Main Course">
-
                                 Main Course
-
                             </option>
-
 
                             <option value="Desserts">
-
                                 Desserts
-
                             </option>
-
 
                             <option value="Pizza">
-
                                 Pizza
-
                             </option>
-
 
                             <option value="Burgers">
-
                                 Burgers
-
                             </option>
-
 
                             <option value="Sandwiches">
-
                                 Sandwiches
-
                             </option>
-
 
                             <option value="South Indian">
-
                                 South Indian
-
                             </option>
-
 
                             <option value="North Indian">
-
                                 North Indian
-
                             </option>
-
 
                             <option value="Chinese">
-
                                 Chinese
-
                             </option>
-
 
                             <option value="Fast Food">
-
                                 Fast Food
-
                             </option>
 
-
                             <option value="Others">
-
                                 Others
-
                             </option>
 
                         </select>
@@ -413,49 +466,50 @@ const AddItem = () => {
 
                     <div>
 
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-
+                        <label
+                            className="
+                                block
+                                text-sm
+                                font-medium
+                                text-gray-700
+                                mb-2
+                            "
+                        >
                             Food Type
-
                         </label>
 
 
                         <select
-
                             name="foodType"
-
                             value={
                                 formData.foodType
                             }
-
                             onChange={
                                 handleChange
                             }
-
                             required
-
-                            className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-[#ff4d2d]"
-
+                            className="
+                                w-full
+                                border
+                                border-gray-300
+                                rounded-xl
+                                px-4
+                                py-3
+                                outline-none
+                                focus:border-[#ff4d2d]
+                            "
                         >
 
                             <option value="">
-
                                 Select Food Type
-
                             </option>
-
 
                             <option value="veg">
-
                                 Veg
-
                             </option>
 
-
                             <option value="non veg">
-
                                 Non Veg
-
                             </option>
 
                         </select>
@@ -467,35 +521,41 @@ const AddItem = () => {
 
                     <div>
 
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-
+                        <label
+                            className="
+                                block
+                                text-sm
+                                font-medium
+                                text-gray-700
+                                mb-2
+                            "
+                        >
                             Price
-
                         </label>
 
 
                         <input
-
                             type="number"
-
                             name="price"
-
                             value={
                                 formData.price
                             }
-
                             onChange={
                                 handleChange
                             }
-
                             placeholder="Enter price"
-
                             min="0"
-
                             required
-
-                            className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-[#ff4d2d]"
-
+                            className="
+                                w-full
+                                border
+                                border-gray-300
+                                rounded-xl
+                                px-4
+                                py-3
+                                outline-none
+                                focus:border-[#ff4d2d]
+                            "
                         />
 
                     </div>
@@ -505,44 +565,52 @@ const AddItem = () => {
 
                     <div>
 
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-
+                        <label
+                            className="
+                                block
+                                text-sm
+                                font-medium
+                                text-gray-700
+                                mb-2
+                            "
+                        >
                             Food Image
-
                         </label>
 
 
                         {preview && (
 
                             <img
-
                                 src={
                                     preview
                                 }
-
                                 alt="Preview"
-
-                                className="w-full h-48 object-cover rounded-xl mb-3"
-
+                                className="
+                                    w-full
+                                    h-48
+                                    object-cover
+                                    rounded-xl
+                                    mb-3
+                                "
                             />
 
                         )}
 
 
                         <input
-
                             type="file"
-
                             accept="image/*"
-
                             onChange={
                                 handleImageChange
                             }
-
                             required
-
-                            className="w-full border border-gray-300 rounded-xl p-2"
-
+                            className="
+                                w-full
+                                border
+                                border-gray-300
+                                rounded-xl
+                                p-2
+                            "
                         />
 
                     </div>
@@ -551,15 +619,21 @@ const AddItem = () => {
                     {/* BUTTON */}
 
                     <button
-
                         type="submit"
-
                         disabled={
                             loading
                         }
-
-                        className="w-full bg-[#ff4d2d] text-white py-3 rounded-full font-semibold hover:bg-orange-600 transition disabled:opacity-60"
-
+                        className="
+                            w-full
+                            bg-[#ff4d2d]
+                            text-white
+                            py-3
+                            rounded-full
+                            font-semibold
+                            hover:bg-orange-600
+                            transition
+                            disabled:opacity-60
+                        "
                     >
 
                         {loading
@@ -573,7 +647,9 @@ const AddItem = () => {
             </div>
 
         </div>
+
     );
+
 };
 
 
