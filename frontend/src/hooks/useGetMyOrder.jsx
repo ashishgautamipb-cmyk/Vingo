@@ -86,10 +86,7 @@ const useGetMyOrders = () => {
                                         order?._id,
 
                                     deliveryAddress:
-                                        order?.deliveryAddress,
-
-                                    shopOrders:
-                                        order?.shopOrders
+                                        order?.deliveryAddress
                                 }
                             );
 
@@ -111,9 +108,30 @@ const useGetMyOrders = () => {
                                             status:
                                                 shopOrder?.status,
 
-                                            deliveryAssignment:
+                                            assignmentId:
                                                 shopOrder
                                                     ?.deliveryAssignment
+                                                    ?._id,
+
+                                            assignmentStatus:
+                                                shopOrder
+                                                    ?.deliveryAssignment
+                                                    ?.status,
+
+                                            assignedTo:
+                                                shopOrder
+                                                    ?.deliveryAssignment
+                                                    ?.assignedTo,
+
+                                            customerLatitude:
+                                                order
+                                                    ?.deliveryAddress
+                                                    ?.latitude,
+
+                                            customerLongitude:
+                                                order
+                                                    ?.deliveryAddress
+                                                    ?.longitude
                                         }
                                     );
 
