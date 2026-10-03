@@ -32,7 +32,6 @@ const useGetMyOrders = () => {
 
                 try {
 
-                    // Get JWT token
                     const token =
                         localStorage.getItem("token");
 
@@ -53,10 +52,87 @@ const useGetMyOrders = () => {
                         );
 
 
-                    setOrders(
+                    const fetchedOrders =
                         result.data.orders ||
-                        []
+                        [];
+
+
+                    // =================================================
+                    // DEBUG LOGS
+                    // =================================================
+
+                    console.log(
+                        "========== MY ORDERS =========="
                     );
+
+                    console.log(
+                        "MY ORDERS RESPONSE:",
+                        result.data
+                    );
+
+                    console.log(
+                        "NUMBER OF ORDERS:",
+                        fetchedOrders.length
+                    );
+
+
+                    fetchedOrders.forEach(
+                        (order, index) => {
+
+                            console.log(
+                                `ORDER ${index + 1}:`,
+                                {
+                                    orderId:
+                                        order?._id,
+
+                                    deliveryAddress:
+                                        order?.deliveryAddress,
+
+                                    shopOrders:
+                                        order?.shopOrders
+                                }
+                            );
+
+
+                            order?.shopOrders?.forEach(
+                                (
+                                    shopOrder,
+                                    shopIndex
+                                ) => {
+
+                                    console.log(
+                                        `SHOP ORDER ${
+                                            shopIndex + 1
+                                        }:`,
+                                        {
+                                            shopOrderId:
+                                                shopOrder?._id,
+
+                                            status:
+                                                shopOrder?.status,
+
+                                            deliveryAssignment:
+                                                shopOrder
+                                                    ?.deliveryAssignment
+                                        }
+                                    );
+
+                                }
+                            );
+
+                        }
+                    );
+
+
+                    console.log(
+                        "=============================="
+                    );
+
+
+                    setOrders(
+                        fetchedOrders
+                    );
+
 
                 } catch (error) {
 
@@ -87,12 +163,14 @@ const useGetMyOrders = () => {
 
         getMyOrders();
 
+
         const interval =
             setInterval(() => {
 
                 getMyOrders();
 
             }, 3000);
+
 
         return () => {
 
@@ -110,9 +188,11 @@ const useGetMyOrders = () => {
     return {
         orders,
         loading,
-        refetchOrders: getMyOrders
+        refetchOrders:
+            getMyOrders
     };
 
 };
+
 
 export default useGetMyOrders;
