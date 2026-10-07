@@ -1,4 +1,3 @@
-import React from "react";
 
 import DeliveryTrackingMap
     from "./DeliveryTrackingMap";

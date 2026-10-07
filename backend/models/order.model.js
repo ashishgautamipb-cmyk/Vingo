@@ -123,7 +123,16 @@ const orderSchema = new mongoose.Schema(
 
         shopOrders: [
             shopOrderSchema
-        ]
+        ],
+
+        totalAmount: {
+            type: Number
+        },
+
+        deliveryFee: {
+            type: Number,
+            default: 0
+        }
     },
     { timestamps: true }
 );

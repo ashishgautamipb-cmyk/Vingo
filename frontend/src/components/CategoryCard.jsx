@@ -1,154 +1,37 @@
-import React from "react";
-import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
-
-const CategoryCard = ({
-    data,
-    index,
-    totalItems,
-    onScrollLeft,
-    onScrollRight,
-    showLeftArrow,
-    showRightArrow,
-}) => {
+function CategoryCard({ data, isSelected, onClick }) {
     return (
-        <div
-            className="
-                relative
-                flex-shrink-0
-                w-[85px]
-                sm:w-[95px]
-                cursor-pointer
-                transition-all
-                duration-300
-                hover:-translate-y-1
-                hover:scale-105
-            "
+        <button
+            type="button"
+            onClick={onClick}
+            className="flex-shrink-0 flex flex-col items-center group cursor-pointer focus:outline-none transition-transform duration-200 active:scale-95"
         >
-
-            {/* IMAGE CONTAINER */}
+            {/* Circular / Rounded Dish Image */}
             <div
-                className="
-                    relative
-                    w-full
-                    h-[85px]
-                    sm:h-[95px]
-                    rounded-xl
-                    overflow-hidden
-                    border
-                    border-[#ff4d2d]
-                    bg-white
-                    shadow-sm
-                    transition-all
-                    duration-300
-                    hover:shadow-md
-                "
+                className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 transition-all duration-300 shadow-sm bg-white p-0.5 ${
+                    isSelected
+                        ? "border-[#ff4d2d] ring-4 ring-[#ff4d2d]/20 shadow-md scale-105"
+                        : "border-orange-100 group-hover:border-[#ff4d2d] group-hover:shadow-lg group-hover:-translate-y-1"
+                }`}
             >
-
-                {/* IMAGE */}
                 <img
                     src={data.image}
                     alt={data.category}
-                    className="
-                        w-full
-                        h-full
-                        object-cover
-                        transition-transform
-                        duration-300
-                        hover:scale-110
-                    "
+                    className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
                 />
-
-                {/* LEFT ARROW - FIRST ITEM */}
-                {index === 0 && showLeftArrow && (
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onScrollLeft();
-                        }}
-                        className="
-                            absolute
-                            left-1
-                            top-1/2
-                            -translate-y-1/2
-                            w-6
-                            h-6
-                            sm:w-7
-                            sm:h-7
-                            rounded-full
-                            bg-white/95
-                            shadow-md
-                            flex
-                            items-center
-                            justify-center
-                            text-gray-700
-                            hover:bg-[#ff4d2d]
-                            hover:text-white
-                            transition-all
-                            z-10
-                        "
-                    >
-                        <IoIosArrowBack
-                            size={16}
-                        />
-                    </button>
-                )}
-
-                {/* RIGHT ARROW - LAST ITEM */}
-                {index === totalItems - 1 && showRightArrow && (
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onScrollRight();
-                        }}
-                        className="
-                            absolute
-                            right-1
-                            top-1/2
-                            -translate-y-1/2
-                            w-6
-                            h-6
-                            sm:w-7
-                            sm:h-7
-                            rounded-full
-                            bg-white/95
-                            shadow-md
-                            flex
-                            items-center
-                            justify-center
-                            text-gray-700
-                            hover:bg-[#ff4d2d]
-                            hover:text-white
-                            transition-all
-                            z-10
-                        "
-                    >
-                        <IoIosArrowForward
-                            size={16}
-                        />
-                    </button>
-                )}
-
             </div>
 
-            {/* CATEGORY NAME */}
-            <p
-                className="
-                    text-center
-                    text-gray-700
-                    text-xs
-                    sm:text-sm
-                    font-medium
-                    mt-1.5
-                    truncate
-                "
+            {/* Category Title */}
+            <span
+                className={`mt-2 text-xs sm:text-sm font-semibold truncate max-w-[90px] text-center transition-colors ${
+                    isSelected
+                        ? "text-[#ff4d2d] font-bold"
+                        : "text-gray-700 group-hover:text-[#ff4d2d]"
+                }`}
             >
                 {data.category}
-            </p>
-
-        </div>
+            </span>
+        </button>
     );
-};
+}
 
 export default CategoryCard;

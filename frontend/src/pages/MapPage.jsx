@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     MapContainer,
     TileLayer,
@@ -64,7 +64,7 @@ function LocationMarker({
         if (position) {
             map.flyTo(position, 16);
         }
-    }, []);
+    }, [map, position]);
 
     if (!position) return null;
 
@@ -246,7 +246,7 @@ function MapPage() {
             }
         );
 
-    }, []);
+    }, [latitude, longitude]);
 
 
     // ==========================================

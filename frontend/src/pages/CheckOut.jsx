@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { serverUrl } from "../App";
 
 import {
@@ -166,105 +166,10 @@ function CheckOut() {
 
 
   // ====================================================
-  // GET CURRENT LOCATION AUTOMATICALLY
-  // ====================================================
-
-  useEffect(() => {
-
-    getCurrentLocationAutomatically();
-
-  }, []);
-
-
-  // ====================================================
-  // AUTOMATIC LOCATION
-  // ====================================================
-
-  const getCurrentLocationAutomatically = () => {
-
-    if (!navigator.geolocation) {
-
-      console.log(
-        "Geolocation is not supported by this browser."
-      );
-
-      return;
-    }
-
-
-    setLoading(true);
-
-
-    navigator.geolocation.getCurrentPosition(
-
-      async ({ coords }) => {
-
-        const lat =
-          coords.latitude;
-
-        const lon =
-          coords.longitude;
-
-
-        console.log(
-          "Checkout current location:",
-          {
-            latitude: lat,
-            longitude: lon,
-          }
-        );
-
-
-        setPosition([
-          lat,
-          lon,
-        ]);
-
-
-        setLocationSelected(
-          true
-        );
-
-
-        await getAddress(
-          lat,
-          lon
-        );
-
-
-        setLoading(false);
-
-      },
-
-
-      (error) => {
-
-        console.log(
-          "Automatic location error:",
-          error.message
-        );
-
-        setLoading(false);
-
-      },
-
-
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
-      }
-
-    );
-
-  };
-
-
-  // ====================================================
   // REVERSE GEOCODING
   // ====================================================
 
-  const getAddress = async (
+  const getAddress = useCallback(async (
     lat,
     lon
   ) => {
@@ -348,7 +253,102 @@ function CheckOut() {
 
     }
 
-  };
+  }, []);
+
+
+  // ====================================================
+  // AUTOMATIC LOCATION
+  // ====================================================
+
+  const getCurrentLocationAutomatically = useCallback(() => {
+
+    if (!navigator.geolocation) {
+
+      console.log(
+        "Geolocation is not supported by this browser."
+      );
+
+      return;
+    }
+
+
+    setLoading(true);
+
+
+    navigator.geolocation.getCurrentPosition(
+
+      async ({ coords }) => {
+
+        const lat =
+          coords.latitude;
+
+        const lon =
+          coords.longitude;
+
+
+        console.log(
+          "Checkout current location:",
+          {
+            latitude: lat,
+            longitude: lon,
+          }
+        );
+
+
+        setPosition([
+          lat,
+          lon,
+        ]);
+
+
+        setLocationSelected(
+          true
+        );
+
+
+        await getAddress(
+          lat,
+          lon
+        );
+
+
+        setLoading(false);
+
+      },
+
+
+      (error) => {
+
+        console.log(
+          "Automatic location error:",
+          error.message
+        );
+
+        setLoading(false);
+
+      },
+
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+
+    );
+
+  }, [getAddress]);
+
+
+  // ====================================================
+  // GET CURRENT LOCATION AUTOMATICALLY
+  // ====================================================
+
+  useEffect(() => {
+
+    getCurrentLocationAutomatically();
+
+  }, [getCurrentLocationAutomatically]);
 
 
   // ====================================================

@@ -9,11 +9,17 @@ const userSlice = createSlice({
         currentState: null,
         currentAddress: null,
         myOrders: [],
+        authInitialized: false,
     },
 
     reducers: {
         setUserData: (state, action) => {
             state.userData = action.payload;
+            state.authInitialized = true;
+        },
+
+        setAuthInitialized: (state, action) => {
+            state.authInitialized = action.payload;
         },
 
         setCurrentCity: (state, action) => {
@@ -35,12 +41,14 @@ const userSlice = createSlice({
         clearUserData: (state) => {
             state.userData = null;
             state.myOrders = [];
+            state.authInitialized = true;
         },
     },
 });
 
 export const {
     setUserData,
+    setAuthInitialized,
     setCurrentCity,
     setCurrentState,
     setCurrentAddress,

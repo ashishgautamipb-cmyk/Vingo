@@ -427,84 +427,47 @@ export const getItemsByCity = async (
         } = req.query;
 
 
-        if (!city) {
+        let shops = [];
 
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "City is required"
-
-            });
-        }
-
-
-        const shops =
-            await Shop.find({
-
+        if (city && city.trim() && city.trim().toLowerCase() !== "all") {
+            shops = await Shop.find({
                 city: {
-                    $regex:
-                        `^${city.trim()}$`,
-
+                    $regex: `^${city.trim()}$`,
                     $options: "i"
                 }
+            }).populate("items");
+        }
 
-            }).populate(
-                "items"
-            );
-
+        // If no shops found in this specific city, fallback to all shops
+        if (shops.length === 0) {
+            shops = await Shop.find({}).populate("items");
+        }
 
         const items = [];
 
-
-        shops.forEach(
-            (shop) => {
-
-                shop.items.forEach(
-                    (item) => {
-
+        shops.forEach((shop) => {
+            if (Array.isArray(shop.items)) {
+                shop.items.forEach((item) => {
+                    if (item) {
                         items.push({
-
                             ...item.toObject(),
-
                             shop: {
-
-                                _id:
-                                    shop._id,
-
-                                name:
-                                    shop.name,
-
-                                city:
-                                    shop.city,
-
-                                state:
-                                    shop.state,
-
-                                address:
-                                    shop.address,
-
-                                image:
-                                    shop.image
-
+                                _id: shop._id,
+                                name: shop.name,
+                                city: shop.city,
+                                state: shop.state,
+                                address: shop.address,
+                                image: shop.image
                             }
-
                         });
-
                     }
-                );
-
+                });
             }
-        );
-
+        });
 
         return res.status(200).json({
-
             success: true,
-
             items
-
         });
 
 

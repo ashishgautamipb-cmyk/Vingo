@@ -1,7 +1,7 @@
-import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FaPlus, FaMinus, FaTrash, FaShoppingBag } from "react-icons/fa";
+import Nav from "../components/Nav";
 
 import {
   increaseQuantity,
@@ -37,11 +37,12 @@ function CartPage() {
       className="
                 min-h-screen
                 bg-[#fff9f6]
-                pt-[85px]
+                pt-[88px]
                 px-4
                 pb-10
             "
     >
+      <Nav />
       {/* ================================= */}
       {/* HEADER */}
       {/* ================================= */}

@@ -1,4 +1,4 @@
-import React, {
+import {
     useEffect,
     useState
 } from "react";
@@ -32,7 +32,12 @@ import useGetMyshop from "./hooks/useGetMyShop";
 
 
 export const serverUrl =
-    "https://vingo-dwtv.onrender.com";
+    import.meta.env.VITE_BACKEND_URL ||
+    (typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1")
+        ? "http://localhost:5000"
+        : "https://vingo-dwtv.onrender.com");
 
 
 function App() {
@@ -42,20 +47,11 @@ function App() {
     // =====================================================
 
     const {
-        userData
+        userData,
+        authInitialized
     } = useSelector(
         (state) => state.user
     );
-
-
-    // =====================================================
-    // AUTH LOADING
-    // =====================================================
-
-    const [
-        authLoading,
-        setAuthLoading
-    ] = useState(true);
 
 
     // =====================================================
@@ -77,88 +73,10 @@ function App() {
 
 
     // =====================================================
-    // WAIT FOR CURRENT USER
-    // =====================================================
-
-    useEffect(() => {
-
-        const token =
-            localStorage.getItem("token");
-
-
-        /*
-         * If there is no token, we already know
-         * that the user is not logged in.
-         */
-
-        if (!token) {
-
-            setAuthLoading(false);
-
-            return;
-
-        }
-
-
-        /*
-         * If token exists, give useGetCurrentUser()
-         * time to fetch the user.
-         *
-         * This prevents:
-         *
-         * /delivery-boy
-         *       ↓
-         * userData = null
-         *       ↓
-         * Navigate("/")
-         *
-         * before the API response arrives.
-         */
-
-        const timer =
-            setTimeout(() => {
-
-                setAuthLoading(false);
-
-            }, 1000);
-
-
-        return () => {
-
-            clearTimeout(timer);
-
-        };
-
-    }, []);
-
-
-    // =====================================================
-    // DEBUG
-    // =====================================================
-
-    console.log(
-        "APP USER DATA:",
-        userData
-            ? {
-                id: userData?._id,
-                role: userData?.role,
-                fullName: userData?.fullName
-            }
-            : null
-    );
-
-
-    console.log(
-        "APP AUTH LOADING:",
-        authLoading
-    );
-
-
-    // =====================================================
     // AUTH LOADING SCREEN
     // =====================================================
 
-    if (authLoading) {
+    if (!authInitialized) {
 
         return (
 
@@ -168,7 +86,7 @@ function App() {
                     flex
                     items-center
                     justify-center
-                    bg-gray-50
+                    bg-[#fff9f6]
                 "
             >
 
@@ -180,10 +98,10 @@ function App() {
 
                     <div
                         className="
-                            w-10
-                            h-10
+                            w-12
+                            h-12
                             border-4
-                            border-gray-200
+                            border-orange-200
                             border-t-[#ff4d2d]
                             rounded-full
                             animate-spin
@@ -194,11 +112,13 @@ function App() {
 
                     <p
                         className="
-                            text-gray-600
-                            font-medium
+                            text-gray-700
+                            font-semibold
+                            tracking-wide
+                            text-sm
                         "
                     >
-                        Loading...
+                        Loading Vingo...
                     </p>
 
                 </div>

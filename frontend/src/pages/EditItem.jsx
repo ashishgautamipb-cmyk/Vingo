@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { serverUrl } from "../App";
+import { setMyShopData } from "../redux/ownerSlice";
 
 const EditItem = () => {
     const { itemId } = useParams();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
-    const { shopData } = useSelector(
+    const { myShopData } = useSelector(
         (state) => state.owner
     );
 
@@ -24,9 +26,9 @@ const EditItem = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (!shopData?.items) return;
+        if (!myShopData?.items) return;
 
-        const item = shopData.items.find(
+        const item = myShopData.items.find(
             (item) => item._id === itemId
         );
 
@@ -40,7 +42,7 @@ const EditItem = () => {
 
             setPreview(item.image || "");
         }
-    }, [shopData, itemId]);
+    }, [myShopData, itemId]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -66,6 +68,8 @@ const EditItem = () => {
         try {
             setLoading(true);
 
+            const token = localStorage.getItem("token");
+
             const data = new FormData();
 
             data.append("name", formData.name);
@@ -82,6 +86,9 @@ const EditItem = () => {
                 data,
                 {
                     withCredentials: true,
+                    headers: token
+                        ? { Authorization: `Bearer ${token}` }
+                        : {},
                 }
             );
 
@@ -89,6 +96,10 @@ const EditItem = () => {
                 "EDIT ITEM RESPONSE:",
                 result.data
             );
+
+            if (result.data?.shop) {
+                dispatch(setMyShopData(result.data.shop));
+            }
 
             alert("Food item updated successfully");
 

@@ -93,8 +93,7 @@ const useGetMyOrders = () => {
 
                             order?.shopOrders?.forEach(
                                 (
-                                    shopOrder,
-                                    shopIndex
+                                    shopOrder
                                 ) => {
 
                                     console.log(

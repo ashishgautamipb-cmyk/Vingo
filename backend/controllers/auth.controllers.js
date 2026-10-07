@@ -10,8 +10,8 @@ import { sendOtpMail } from "../utils/mail.js";
 
 const cookieOptions = {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
@@ -30,7 +30,15 @@ export const signUp = async (req, res) => {
             role
         } = req.body;
 
-        let existingUser = await User.findOne({ email });
+        if (!email) {
+            return res.status(400).json({
+                message: "Email is required"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        let existingUser = await User.findOne({ email: normalizedEmail });
 
         if (existingUser) {
             return res.status(400).json({
@@ -56,10 +64,10 @@ export const signUp = async (req, res) => {
         );
 
         const user = await User.create({
-            fullName,
-            email,
-            role,
-            mobile,
+            fullName: fullName ? fullName.trim() : "User",
+            email: normalizedEmail,
+            role: role || "user",
+            mobile: mobile ? mobile.trim() : "",
             password: hashedPassword
         });
 
@@ -103,11 +111,25 @@ export const signIn = async (req, res) => {
             password
         } = req.body;
 
-        const user = await User.findOne({ email });
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Please enter both email and password"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const user = await User.findOne({ email: normalizedEmail });
 
         if (!user) {
             return res.status(400).json({
                 message: "user does not exist"
+            });
+        }
+
+        if (!user.password) {
+            return res.status(400).json({
+                message: "This account was registered using Google. Please continue with Google or reset your password."
             });
         }
 
@@ -185,7 +207,15 @@ export const sendOtp = async (req, res) => {
 
         const { email } = req.body;
 
-        const user = await User.findOne({ email });
+        if (!email) {
+            return res.status(400).json({
+                message: "Email is required"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const user = await User.findOne({ email: normalizedEmail });
 
         if (!user) {
             return res.status(400).json({
@@ -207,7 +237,7 @@ export const sendOtp = async (req, res) => {
         await user.save();
 
         await sendOtpMail(
-            email,
+            normalizedEmail,
             otp
         );
 
@@ -236,7 +266,15 @@ export const verifyOtp = async (req, res) => {
             otp
         } = req.body;
 
-        const user = await User.findOne({ email });
+        if (!email || !otp) {
+            return res.status(400).json({
+                message: "Email and OTP are required"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const user = await User.findOne({ email: normalizedEmail });
 
         if (
             !user ||
@@ -281,7 +319,15 @@ export const resetPassword = async (req, res) => {
             newPassword
         } = req.body;
 
-        const user = await User.findOne({ email });
+        if (!email) {
+            return res.status(400).json({
+                message: "Email is required"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const user = await User.findOne({ email: normalizedEmail });
 
         if (
             !user ||
@@ -340,17 +386,25 @@ export const googleAuth = async (req, res) => {
             role
         } = req.body;
 
+        if (!email) {
+            return res.status(400).json({
+                message: "Email is required"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
         let user = await User.findOne({
-            email
+            email: normalizedEmail
         });
 
         if (!user) {
 
             user = await User.create({
-                fullName,
-                email,
-                mobile,
-                role
+                fullName: fullName ? fullName.trim() : "User",
+                email: normalizedEmail,
+                mobile: mobile ? mobile.trim() : "",
+                role: role || "user"
             });
 
         } else {

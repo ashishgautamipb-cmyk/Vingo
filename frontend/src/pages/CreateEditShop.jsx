@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -350,7 +350,10 @@ const CreateEditShop = () => {
         getCurrentLocation();
 
     }, [
-        myShopData
+        myShopData,
+        currentCity,
+        currentState,
+        currentAddress
     ]);
 
 

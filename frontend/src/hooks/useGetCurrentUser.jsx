@@ -2,73 +2,60 @@ import { useEffect } from "react";
 import axios from "axios";
 import { serverUrl } from "../App";
 import { useDispatch } from "react-redux";
-import { setUserData } from "../redux/userSlice";
+import { setUserData, clearUserData, setAuthInitialized } from "../redux/userSlice";
 
 const useGetCurrentUser = () => {
-
     const dispatch = useDispatch();
 
     useEffect(() => {
+        let isMounted = true;
 
         const fetchUser = async () => {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                if (isMounted) {
+                    dispatch(setAuthInitialized(true));
+                }
+                return;
+            }
 
             try {
-
-                const token =
-                    localStorage.getItem("token");
-
-                if (!token) {
-                    console.log(
-                        "CURRENT USER: Token not found"
-                    );
-                    return;
-                }
-
-                const result =
-                    await axios.get(
-                        `${serverUrl}/api/user/current-user`,
-                        {
-                            withCredentials: true,
-
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`
-                            }
-                        }
-                    );
-
-                console.log(
-                    "CURRENT USER:",
+                const result = await axios.get(
+                    `${serverUrl}/api/user/current-user`,
                     {
-                        id: result.data?._id,
-                        fullName: result.data?.fullName,
-                        email: result.data?.email,
-                        role: result.data?.role
+                        withCredentials: true,
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
                     }
                 );
 
-                dispatch(
-                    setUserData(
-                        result.data
-                    )
-                );
-
+                if (isMounted) {
+                    dispatch(setUserData(result.data));
+                }
             } catch (error) {
-
-                console.log(
+                console.warn(
                     "CURRENT USER ERROR:",
-                    error.response?.data ||
-                    error.message
+                    error.response?.data?.message || error.message
                 );
 
-            }
+                if (error.response?.status === 401 || error.response?.status === 404) {
+                    localStorage.removeItem("token");
+                }
 
+                if (isMounted) {
+                    dispatch(clearUserData());
+                }
+            }
         };
 
         fetchUser();
 
+        return () => {
+            isMounted = false;
+        };
     }, [dispatch]);
-
 };
 
 export default useGetCurrentUser;

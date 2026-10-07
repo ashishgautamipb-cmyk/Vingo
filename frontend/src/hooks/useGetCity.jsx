@@ -9,101 +9,43 @@ import {
 } from "../redux/userSlice";
 
 function useGetCity() {
-
     const dispatch = useDispatch();
-
-    const apiKey =
-        import.meta.env.VITE_GEOAPIKEY;
+    const apiKey = import.meta.env.VITE_GEOAPIKEY;
 
     useEffect(() => {
+        // 1. Immediately initialize with cached city if available, else default to "Greater Noida"
+        const savedCity = localStorage.getItem("city");
+        const defaultCity = savedCity || "Greater Noida";
+        dispatch(setCurrentCity(defaultCity));
 
-        // ==========================================
-        // CHECK API KEY
-        // ==========================================
-
-        if (!apiKey) {
-            console.log(
-                "Geoapify API key is missing"
-            );
+        // 2. Try fetching accurate GPS location in the background
+        if (!apiKey || !navigator.geolocation) {
             return;
         }
-
-
-        // ==========================================
-        // CHECK GEOLOCATION
-        // ==========================================
-
-        if (!navigator.geolocation) {
-            console.log(
-                "Geolocation is not supported by this browser"
-            );
-            return;
-        }
-
-
-        // ==========================================
-        // GET CURRENT LOCATION
-        // ==========================================
 
         navigator.geolocation.getCurrentPosition(
-
             async (position) => {
-
                 try {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
 
-                    const latitude =
-                        position.coords.latitude;
-
-                    const longitude =
-                        position.coords.longitude;
-
-
-                    console.log(
-                        "Current Latitude:",
-                        latitude
+                    const result = await axios.get(
+                        "https://api.geoapify.com/v1/geocode/reverse",
+                        {
+                            params: {
+                                lat: latitude,
+                                lon: longitude,
+                                format: "json",
+                                apiKey: apiKey,
+                            },
+                        }
                     );
 
-                    console.log(
-                        "Current Longitude:",
-                        longitude
-                    );
-
-
-                    // ==========================================
-                    // REVERSE GEOCODING
-                    // ==========================================
-
-                    const result =
-                        await axios.get(
-                            "https://api.geoapify.com/v1/geocode/reverse",
-                            {
-                                params: {
-                                    lat: latitude,
-                                    lon: longitude,
-                                    format: "json",
-                                    apiKey: apiKey,
-                                },
-                            }
-                        );
-
-
-                    const location =
-                        result.data?.results?.[0];
-
+                    const location = result.data?.results?.[0];
 
                     if (!location) {
-
-                        console.log(
-                            "Location data not found"
-                        );
-
                         return;
                     }
-
-
-                    // ==========================================
-                    // CURRENT CITY
-                    // ==========================================
 
                     const detectedCity =
                         location.city ||
@@ -112,125 +54,52 @@ function useGetCity() {
                         location.county ||
                         null;
 
-
-                    // ==========================================
-                    // CURRENT STATE
-                    // ==========================================
-
                     const detectedState =
                         location.state ||
                         location.state_district ||
                         null;
-
-
-                    // ==========================================
-                    // CURRENT ADDRESS
-                    // ==========================================
 
                     const detectedAddress =
                         location.address_line1 ||
                         location.formatted ||
                         null;
 
-
-                    console.log(
-                        "Current City:",
-                        detectedCity
-                    );
-
-                    console.log(
-                        "Current State:",
-                        detectedState
-                    );
-
-                    console.log(
-                        "Current Address:",
-                        detectedAddress
-                    );
-
-
-                    // ==========================================
-                    // SAVE CURRENT CITY
-                    // ==========================================
-
                     if (detectedCity) {
-
-                        dispatch(
-                            setCurrentCity(
-                                detectedCity
-                            )
-                        );
+                        dispatch(setCurrentCity(detectedCity));
+                        localStorage.setItem("city", detectedCity);
                     }
-
-
-                    // ==========================================
-                    // SAVE CURRENT STATE
-                    // ==========================================
 
                     if (detectedState) {
-
-                        dispatch(
-                            setCurrentState(
-                                detectedState
-                            )
-                        );
+                        dispatch(setCurrentState(detectedState));
+                        localStorage.setItem("state", detectedState);
                     }
-
-
-                    // ==========================================
-                    // SAVE CURRENT ADDRESS
-                    // ==========================================
 
                     if (detectedAddress) {
-
-                        dispatch(
-                            setCurrentAddress(
-                                detectedAddress
-                            )
-                        );
+                        dispatch(setCurrentAddress(detectedAddress));
+                        localStorage.setItem("address", detectedAddress);
                     }
-
                 } catch (error) {
-
-                    console.log(
+                    console.warn(
                         "Reverse geocoding error:",
-                        error.response?.data ||
-                        error.message
+                        error.response?.data || error.message
                     );
                 }
             },
-
-
-            // ==========================================
-            // LOCATION ERROR
-            // ==========================================
-
             (error) => {
-
-                console.log(
-                    "Location error:",
+                console.warn(
+                    "Geolocation permission or timeout:",
                     error.code,
                     error.message
                 );
-
+                // Keep the default or saved city so the page is never blank
             },
-
-
-            // ==========================================
-            // LOCATION OPTIONS
-            // ==========================================
-
             {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0,
+                enableHighAccuracy: false,
+                timeout: 8000,
+                maximumAge: 60000,
             }
         );
-
-    }, [
-        apiKey,
-        dispatch,
-    ]);
+    }, [apiKey, dispatch]);
 }
 
 export default useGetCity;

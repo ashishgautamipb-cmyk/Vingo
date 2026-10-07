@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import Nav from "../components/Nav";
 
 import useGetMyOrders from "../hooks/useGetMyOrder";
 
@@ -31,7 +32,7 @@ const MyOrders = () => {
         useState([]);
 
 
-    React.useEffect(() => {
+    useEffect(() => {
 
         setOrderList(orders);
 
@@ -113,9 +114,8 @@ const MyOrders = () => {
 
 
     return (
-
-        <div className="min-h-screen bg-[#fff9f6] pt-[75px] px-4 pb-8">
-
+        <div className="min-h-screen bg-[#fff9f6] pt-[88px] px-4 pb-8">
+            <Nav />
             <div className="max-w-[900px] mx-auto">
 
 

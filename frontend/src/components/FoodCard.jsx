@@ -1,137 +1,50 @@
-import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
-import {
-    FaStar,
-    FaPlus,
-    FaMinus,
-    FaShoppingCart,
-    FaCheck,
-} from "react-icons/fa";
-
-import {
-    addToCart,
-    increaseQuantity,
-    decreaseQuantity,
-} from "../redux/cartSlice";
+import { FaStar, FaPlus, FaMinus } from "react-icons/fa";
+import { addToCart, increaseQuantity, decreaseQuantity } from "../redux/cartSlice";
 
 function FoodCard({ item }) {
     const dispatch = useDispatch();
 
-    const cartItems = useSelector(
-        (state) => state.cart.items
-    );
+    const cartItems = useSelector((state) => state.cart.items || []);
+    const cartItem = cartItems.find((ci) => ci._id === item._id);
 
-    const cartItem = cartItems.find(
-        (cartItem) => cartItem._id === item._id
-    );
+    const isInCart = Boolean(cartItem && cartItem.quantity > 0);
+    const quantity = cartItem ? cartItem.quantity : 0;
 
-    // Local quantity before item is submitted to cart
-    const [localQuantity, setLocalQuantity] = useState(0);
-
-    const isInCart = !!cartItem;
-
-    const quantity = isInCart
-        ? cartItem.quantity
-        : localQuantity;
-
-    const addedToCart =
-        cartItem?.addedToCart || false;
-
-    // =====================================
-    // PLUS
-    // =====================================
-    const handleIncrease = () => {
-        if (!isInCart) {
-            setLocalQuantity((prev) => prev + 1);
-        } else {
-            dispatch(increaseQuantity(item._id));
-        }
-    };
-
-    // =====================================
-    // MINUS
-    // =====================================
-    const handleDecrease = () => {
-        if (!isInCart) {
-            setLocalQuantity((prev) =>
-                Math.max(0, prev - 1)
-            );
-        } else {
-            dispatch(decreaseQuantity(item._id));
-        }
-    };
-
-    // =====================================
-    // CART BUTTON
-    // =====================================
-    const handleAddToCart = () => {
-        // Green button should not be clickable
-        if (addedToCart) return;
-
-        // Don't add if quantity is 0
-        if (quantity <= 0) return;
-
+    const handleAddInitial = (e) => {
+        e.stopPropagation();
         dispatch(
             addToCart({
                 ...item,
-                quantity: quantity,
+                quantity: 1,
             })
         );
+    };
 
-        setLocalQuantity(0);
+    const handleIncrease = (e) => {
+        e.stopPropagation();
+        dispatch(increaseQuantity(item._id));
+    };
+
+    const handleDecrease = (e) => {
+        e.stopPropagation();
+        dispatch(decreaseQuantity(item._id));
     };
 
     return (
-        <div
-            className={`
-                w-[180px]
-                rounded-xl
-                overflow-hidden
-                shadow-sm
-                transition-all
-                duration-300
-                flex
-                flex-col
-                border
-                ${
-                    addedToCart
-                        ? "bg-green-50 border-green-400"
-                        : "bg-white border-orange-200"
-                }
-            `}
-        >
-            {/* IMAGE */}
-            <div className="relative w-full h-[115px]">
-
+        <div className="w-[190px] sm:w-[210px] bg-white rounded-2xl overflow-hidden border border-orange-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between group">
+            {/* Top Image Container */}
+            <div className="relative w-full h-[130px] sm:h-[140px] overflow-hidden bg-gray-100">
                 <img
                     src={item.image}
                     alt={item.name}
-                    className="
-                        w-full
-                        h-full
-                        object-cover
-                    "
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
 
-                {/* FOOD TYPE */}
-                <div
-                    className="
-                        absolute
-                        top-2
-                        right-2
-                        w-5
-                        h-5
-                        bg-white
-                        rounded-full
-                        flex
-                        items-center
-                        justify-center
-                        shadow-sm
-                    "
-                >
+                {/* Food Type Indicator (Veg/Non-Veg) */}
+                <div className="absolute top-2.5 left-2.5 w-5 h-5 bg-white/95 rounded-md flex items-center justify-center shadow-md backdrop-blur-sm">
                     <div
-                        className={`w-3 h-3 rounded-full border flex items-center justify-center ${
+                        className={`w-3 h-3 rounded-sm border-2 flex items-center justify-center ${
                             item.foodType === "veg"
                                 ? "border-green-600"
                                 : "border-red-600"
@@ -146,161 +59,66 @@ function FoodCard({ item }) {
                         />
                     </div>
                 </div>
+
+                {/* Rating Badge */}
+                <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md text-[11px] font-bold text-gray-800 flex items-center gap-1 shadow-sm">
+                    <FaStar className="text-amber-400 text-[10px]" />
+                    <span>4.5</span>
+                </div>
             </div>
 
-            {/* CONTENT */}
-            <div className="p-2">
-
-                {/* NAME */}
-                <h2
-                    className="
-                        text-[13px]
-                        font-semibold
-                        text-gray-800
-                        truncate
-                    "
-                >
-                    {item.name}
-                </h2>
-
-                {/* RATING */}
-                <div className="flex items-center gap-1 mt-1">
-
-                    <div className="flex gap-[1px]">
-                        {[1, 2, 3, 4, 5].map(
-                            (star) => (
-                                <FaStar
-                                    key={star}
-                                    size={10}
-                                    className="text-yellow-400"
-                                />
-                            )
-                        )}
-                    </div>
-
-                    <span className="text-[10px] text-gray-400">
-                        0
-                    </span>
-
+            {/* Bottom Content */}
+            <div className="p-3.5 flex flex-col justify-between flex-1">
+                <div>
+                    <h3 className="text-sm font-bold text-gray-900 truncate group-hover:text-[#ff4d2d] transition-colors">
+                        {item.name}
+                    </h3>
+                    <p className="text-[11px] font-medium text-gray-400 truncate mt-0.5 capitalize">
+                        {item.category || "Delicious Dish"} • {item.shop?.name || "Restaurant"}
+                    </p>
                 </div>
 
-                {/* PRICE + CONTROLS */}
-                <div
-                    className="
-                        flex
-                        items-center
-                        justify-between
-                        mt-3
-                    "
-                >
-
-                    {/* PRICE */}
-                    <span
-                        className="
-                            text-sm
-                            font-bold
-                            text-gray-800
-                        "
-                    >
-                        ₹{item.price}
-                    </span>
-
-                    {/* CONTROLS */}
-                    <div className="flex items-center">
-
-                        {/* MINUS */}
-                        <button
-                            onClick={handleDecrease}
-                            disabled={quantity === 0}
-                            className="
-                                w-6
-                                h-7
-                                border
-                                border-gray-400
-                                rounded-l-full
-                                flex
-                                items-center
-                                justify-center
-                                text-gray-700
-                                disabled:opacity-40
-                                disabled:cursor-not-allowed
-                            "
-                        >
-                            <FaMinus size={8} />
-                        </button>
-
-                        {/* QUANTITY */}
-                        <div
-                            className="
-                                h-7
-                                min-w-[24px]
-                                border-t
-                                border-b
-                                border-gray-400
-                                bg-white
-                                flex
-                                items-center
-                                justify-center
-                                text-xs
-                                font-semibold
-                            "
-                        >
-                            {quantity}
-                        </div>
-
-                        {/* PLUS */}
-                        <button
-                            onClick={handleIncrease}
-                            className="
-                                w-6
-                                h-7
-                                border
-                                border-gray-400
-                                rounded-r-full
-                                flex
-                                items-center
-                                justify-center
-                                text-gray-700
-                            "
-                        >
-                            <FaPlus size={8} />
-                        </button>
-
-                        {/* CART / GREEN CHECK */}
-                        <button
-                            onClick={handleAddToCart}
-                            disabled={
-                                addedToCart ||
-                                quantity === 0
-                            }
-                            className={`
-                                ml-1
-                                w-7
-                                h-7
-                                rounded-md
-                                flex
-                                items-center
-                                justify-center
-                                transition-all
-                                ${
-                                    addedToCart
-                                        ? "bg-green-500 text-white cursor-not-allowed"
-                                        : quantity === 0
-                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                        : "bg-[#ff4d2d] text-white hover:bg-orange-600"
-                                }
-                            `}
-                        >
-                            {addedToCart ? (
-                                <FaCheck size={11} />
-                            ) : (
-                                <FaShoppingCart
-                                    size={11}
-                                />
-                            )}
-                        </button>
-
+                {/* Price & Action Row */}
+                <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                    <div className="flex flex-col">
+                        <span className="text-xs text-gray-400 font-medium">Price</span>
+                        <span className="text-sm sm:text-base font-extrabold text-gray-900">
+                            ₹{item.price}
+                        </span>
                     </div>
+
+                    {/* Quantity or ADD Button */}
+                    {!isInCart ? (
+                        <button
+                            type="button"
+                            onClick={handleAddInitial}
+                            className="px-3.5 py-1.5 rounded-xl bg-orange-50 hover:bg-[#ff4d2d] text-[#ff4d2d] hover:text-white border border-[#ff4d2d]/30 text-xs font-extrabold shadow-sm active:scale-95 transition-all cursor-pointer"
+                        >
+                            ADD +
+                        </button>
+                    ) : (
+                        <div className="flex items-center rounded-xl bg-[#ff4d2d] text-white shadow-md shadow-orange-500/25 overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={handleDecrease}
+                                className="px-2 py-1.5 hover:bg-[#e03a1a] transition cursor-pointer"
+                                aria-label="Decrease quantity"
+                            >
+                                <FaMinus className="w-2.5 h-2.5" />
+                            </button>
+                            <span className="px-2 text-xs font-black select-none">
+                                {quantity}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={handleIncrease}
+                                className="px-2 py-1.5 hover:bg-[#e03a1a] transition cursor-pointer"
+                                aria-label="Increase quantity"
+                            >
+                                <FaPlus className="w-2.5 h-2.5" />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
