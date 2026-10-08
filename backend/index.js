@@ -20,8 +20,13 @@ const isAllowedOrigin = (origin) => {
     if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
         return true;
     }
-    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
-        return true;
+    if (process.env.FRONTEND_URL) {
+        const allowed = process.env.FRONTEND_URL.split(",")
+            .map((url) => url.trim().replace(/\/$/, ""))
+            .filter(Boolean);
+        if (allowed.includes(origin.replace(/\/$/, ""))) {
+            return true;
+        }
     }
     return false;
 };
